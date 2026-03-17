@@ -3,10 +3,271 @@
 <head>
     <title>Live Orders</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --pending: #f59e0b;
+            --success: #059669;
+            --danger: #dc2626;
+            --dark: #111827;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 18px;
+        }
+
+        .topbar h1 {
+            margin: 0 0 4px 0;
+            font-size: 22px;
+        }
+
+        .topbar-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .nav-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: #e5e7eb;
+            color: var(--text);
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 18px;
+        }
+
+        .page-note {
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .order-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 6px solid var(--pending);
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+            padding: 16px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .order-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .order-meta {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .note-box {
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .items-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .items-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 14px 0;
+        }
+
+        .items-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .items-list li:last-child {
+            border-bottom: 0;
+        }
+
+        .order-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
+        .order-total {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            border: 0;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: bold;
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+
+        .finish-btn {
+            background: var(--success);
+        }
+
+        .cancel-btn {
+            background: var(--danger);
+        }
+
+        .empty-state {
+            background: white;
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            padding: 32px 18px;
+            text-align: center;
+            color: var(--muted);
+        }
+    </style>
 </head>
 <body>
-    <h1>Live Orders Page</h1>
-    <p>This is the future base/bar live orders screen.</p>
-    <p><a href="{% url 'home' %}">Back Home</a></p>
+    <div class="topbar">
+        <h1>Live Orders</h1>
+        <div class="topbar-meta">
+            <span>Pending orders for bar/base screen</span>
+            <div class="nav-row">
+                <a class="nav-btn" href="{% url 'home' %}">Home</a>
+                <a class="nav-btn" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <p class="page-note">
+            This screen currently loads all pending orders from the database. Real-time updates come next.
+        </p>
+
+        {% if pending_orders %}
+            <div class="orders-grid">
+                {% for order in pending_orders %}
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <div class="order-title">Order #{{ order.id }}</div>
+                                <div class="order-meta">
+                                    Waiter: <strong>{{ order.waiter.get_full_name|default:order.waiter.username }}</strong><br>
+                                    Table:
+                                    <strong>
+                                        {% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}
+                                    </strong><br>
+                                    Time: <strong>{{ order.created_at|date:"H:i:s" }}</strong>
+                                </div>
+                            </div>
+                            <span class="status-badge">PENDING</span>
+                        </div>
+
+                        {% if order.note %}
+                            <div class="note-box">
+                                <strong>Note:</strong> {{ order.note }}
+                            </div>
+                        {% endif %}
+
+                        <div class="items-title">Items</div>
+                        <ul class="items-list">
+                            {% for item in order.items.all %}
+                                <li>
+                                    <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                                    <span>€{{ item.subtotal }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="order-footer">
+                            <div class="order-total">Total: €{{ order.total }}</div>
+                            <div class="order-actions">
+                                <button type="button" class="action-btn finish-btn">Finished</button>
+                                <button type="button" class="action-btn cancel-btn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>No pending orders</h3>
+                <p>When waiters submit new orders, they will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>

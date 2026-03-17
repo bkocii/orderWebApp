@@ -1,5 +1,5 @@
 import json
-
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -20,9 +20,16 @@ def waiter_order_page(request):
     return render(request, "orders/waiter_order_page.html", {"products": products})
 
 
-@login_required
+@staff_member_required(login_url="login")
 def live_orders_page(request):
-    return render(request, "orders/live_orders_page.html")
+    pending_orders = (
+        Order.objects
+        .filter(status=Order.STATUS_PENDING)
+        .select_related("waiter")
+        .prefetch_related("items__product")
+        .order_by("created_at")
+    )
+    return render(request, "orders/live_orders_page.html", {"pending_orders": pending_orders})
 
 
 @login_required

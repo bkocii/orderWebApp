@@ -10,7 +10,9 @@
 
     <ul>
         <li><a href="{% url 'waiter_order_page' %}">Waiter Order Page</a></li>
-        <li><a href="{% url 'live_orders_page' %}">Live Orders Page</a></li>
+        {% if request.user.is_staff %}
+            <li><a href="{% url 'live_orders_page' %}">Live Orders Page</a></li>
+        {% endif %}
         <li>
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
