@@ -321,6 +321,8 @@
             <div id="cart-empty" class="cart-empty">No items added yet.</div>
             <div id="cart-list" class="cart-list"></div>
 
+            <div id="submit-message" style="margin-bottom: 12px; font-size: 14px;"></div>
+
             <div class="cart-footer">
                 <div class="cart-total">Total: €<span id="cart-total">0.00</span></div>
                 <button id="submit-order-btn" class="action-btn" disabled>
@@ -331,104 +333,181 @@
     </div>
 
     <script>
-        const cart = {};
-        const cartList = document.getElementById("cart-list");
-        const cartEmpty = document.getElementById("cart-empty");
-        const cartTotalEl = document.getElementById("cart-total");
-        const submitOrderBtn = document.getElementById("submit-order-btn");
+    const cart = {};
+    const cartList = document.getElementById("cart-list");
+    const cartEmpty = document.getElementById("cart-empty");
+    const cartTotalEl = document.getElementById("cart-total");
+    const submitOrderBtn = document.getElementById("submit-order-btn");
+    const submitMessage = document.getElementById("submit-message");
+    const tableNumberInput = document.getElementById("table_number");
+    const noteInput = document.getElementById("note");
 
-        function formatMoney(value) {
-            return Number(value).toFixed(2);
+    function formatMoney(value) {
+        return Number(value).toFixed(2);
+    }
+
+    function getCsrfToken() {
+        const cookieValue = document.cookie
+            .split("; ")
+            .find(row => row.startsWith("csrftoken="));
+        return cookieValue ? cookieValue.split("=")[1] : "";
+    }
+
+    function showMessage(text, color = "green") {
+        submitMessage.textContent = text;
+        submitMessage.style.color = color;
+    }
+
+    function clearMessage() {
+        submitMessage.textContent = "";
+    }
+
+    function updateSubmitState() {
+        const hasItems = Object.keys(cart).length > 0;
+        submitOrderBtn.disabled = !hasItems;
+        cartEmpty.style.display = hasItems ? "none" : "block";
+    }
+
+    function renderCart() {
+        cartList.innerHTML = "";
+
+        let total = 0;
+
+        Object.values(cart).forEach(item => {
+            const subtotal = item.quantity * item.price;
+            total += subtotal;
+
+            const row = document.createElement("div");
+            row.className = "cart-item";
+
+            row.innerHTML = `
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-subtotal">€${formatMoney(item.price)} each · Subtotal €${formatMoney(subtotal)}</div>
+                </div>
+                <div class="qty-controls">
+                    <button type="button" class="qty-btn remove" data-action="decrease" data-id="${item.id}">-</button>
+                    <span class="qty-value">${item.quantity}</span>
+                    <button type="button" class="qty-btn" data-action="increase" data-id="${item.id}">+</button>
+                </div>
+            `;
+
+            cartList.appendChild(row);
+        });
+
+        cartTotalEl.textContent = formatMoney(total);
+        updateSubmitState();
+    }
+
+    function addToCart(id, name, price) {
+        clearMessage();
+
+        if (!cart[id]) {
+            cart[id] = {
+                id: id,
+                name: name,
+                price: parseFloat(price),
+                quantity: 1
+            };
+        } else {
+            cart[id].quantity += 1;
         }
+        renderCart();
+    }
 
-        function updateSubmitState() {
-            const hasItems = Object.keys(cart).length > 0;
-            submitOrderBtn.disabled = !hasItems;
-            cartEmpty.style.display = hasItems ? "none" : "block";
-        }
+    function changeQuantity(id, action) {
+        clearMessage();
 
-        function renderCart() {
-            cartList.innerHTML = "";
+        if (!cart[id]) return;
 
-            let total = 0;
-
-            Object.values(cart).forEach(item => {
-                const subtotal = item.quantity * item.price;
-                total += subtotal;
-
-                const row = document.createElement("div");
-                row.className = "cart-item";
-
-                row.innerHTML = `
-                    <div class="cart-item-info">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-subtotal">€${formatMoney(item.price)} each · Subtotal €${formatMoney(subtotal)}</div>
-                    </div>
-                    <div class="qty-controls">
-                        <button type="button" class="qty-btn remove" data-action="decrease" data-id="${item.id}">-</button>
-                        <span class="qty-value">${item.quantity}</span>
-                        <button type="button" class="qty-btn" data-action="increase" data-id="${item.id}">+</button>
-                    </div>
-                `;
-
-                cartList.appendChild(row);
-            });
-
-            cartTotalEl.textContent = formatMoney(total);
-            updateSubmitState();
-        }
-
-        function addToCart(id, name, price) {
-            if (!cart[id]) {
-                cart[id] = {
-                    id: id,
-                    name: name,
-                    price: parseFloat(price),
-                    quantity: 1
-                };
-            } else {
-                cart[id].quantity += 1;
+        if (action === "increase") {
+            cart[id].quantity += 1;
+        } else if (action === "decrease") {
+            cart[id].quantity -= 1;
+            if (cart[id].quantity <= 0) {
+                delete cart[id];
             }
-            renderCart();
         }
-
-        function changeQuantity(id, action) {
-            if (!cart[id]) return;
-
-            if (action === "increase") {
-                cart[id].quantity += 1;
-            } else if (action === "decrease") {
-                cart[id].quantity -= 1;
-                if (cart[id].quantity <= 0) {
-                    delete cart[id];
-                }
-            }
-
-            renderCart();
-        }
-
-        document.querySelectorAll(".product-card").forEach(btn => {
-            btn.addEventListener("click", function () {
-                addToCart(
-                    this.dataset.productId,
-                    this.dataset.productName,
-                    this.dataset.productPrice
-                );
-            });
-        });
-
-        cartList.addEventListener("click", function (e) {
-            const btn = e.target.closest("[data-action]");
-            if (!btn) return;
-
-            changeQuantity(btn.dataset.id, btn.dataset.action);
-        });
-
-        submitOrderBtn.addEventListener("click", function () {
-            alert("UI step complete. Submission comes in next step.");
-        });
 
         renderCart();
-    </script>
+    }
+
+    function buildPayload() {
+        return {
+            table_number: tableNumberInput.value.trim(),
+            note: noteInput.value.trim(),
+            items: Object.values(cart).map(item => ({
+                product_id: item.id,
+                quantity: item.quantity
+            }))
+        };
+    }
+
+    function clearOrderForm() {
+        Object.keys(cart).forEach(key => delete cart[key]);
+        tableNumberInput.value = "";
+        noteInput.value = "";
+        renderCart();
+    }
+
+    async function submitOrder() {
+        const payload = buildPayload();
+
+        if (!payload.items.length) {
+            showMessage("Please add at least one item.", "red");
+            return;
+        }
+
+        submitOrderBtn.disabled = true;
+        submitOrderBtn.textContent = "Submitting...";
+
+        try {
+            const response = await fetch("{% url 'submit_order' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken()
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                showMessage(data.error || "Failed to create order.", "red");
+                return;
+            }
+
+            showMessage(`Order #${data.order_id} created successfully.`, "green");
+            clearOrderForm();
+        } catch (error) {
+            showMessage("Network or server error while submitting order.", "red");
+        } finally {
+            submitOrderBtn.textContent = "Submit Order";
+            updateSubmitState();
+        }
+    }
+
+    document.querySelectorAll(".product-card").forEach(btn => {
+        btn.addEventListener("click", function () {
+            addToCart(
+                this.dataset.productId,
+                this.dataset.productName,
+                this.dataset.productPrice
+            );
+        });
+    });
+
+    cartList.addEventListener("click", function (e) {
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+
+        changeQuantity(btn.dataset.id, btn.dataset.action);
+    });
+
+    submitOrderBtn.addEventListener("click", submitOrder);
+
+    renderCart();
+</script>
 </body>
 </html>
