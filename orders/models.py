@@ -47,7 +47,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
 
     class Meta:
@@ -55,8 +55,15 @@ class OrderItem(models.Model):
         verbose_name_plural = "Order items"
 
     def save(self, *args, **kwargs):
+        self.unit_price = self.product.price
         self.subtotal = Decimal(self.quantity) * self.unit_price
         super().save(*args, **kwargs)
+        self.order.recalculate_total()
+
+    def delete(self, *args, **kwargs):
+        order = self.order
+        super().delete(*args, **kwargs)
+        order.recalculate_total()
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
