@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <h1>Bar Ordering System</h1>
+    <p>Logged in as: {{ request.user.username }}</p>
+
+    <ul>
+        <li><a href="{% url 'waiter_order_page' %}">Waiter Order Page</a></li>
+        <li><a href="{% url 'live_orders_page' %}">Live Orders Page</a></li>
+        <li>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        </li>
+    </ul>
+</body>
+</html>
