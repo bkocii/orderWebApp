@@ -1,10 +1,11 @@
 import json
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
-
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from products.models import Product
 from .models import Order, OrderItem
 
@@ -91,3 +92,42 @@ def submit_order(request):
         "order_id": order.id,
         "total": str(order.total),
     })
+
+
+@staff_member_required(login_url="login")
+@require_POST
+def finish_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if order.status != Order.STATUS_PENDING:
+        return JsonResponse({"success": False, "error": "Order already processed."}, status=400)
+
+    order.status = Order.STATUS_FINISHED
+    order.finished_at = timezone.now()
+    order.save(update_fields=["status", "finished_at", "updated_at"])
+
+    return JsonResponse({
+        "success": True,
+        "order_id": order.id,
+        "new_status": order.status,
+    })
+
+
+@staff_member_required(login_url="login")
+@require_POST
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if order.status != Order.STATUS_PENDING:
+        return JsonResponse({"success": False, "error": "Order already processed."}, status=400)
+
+    order.status = Order.STATUS_CANCELED
+    order.canceled_at = timezone.now()
+    order.save(update_fields=["status", "canceled_at", "updated_at"])
+
+    return JsonResponse({
+        "success": True,
+        "order_id": order.id,
+        "new_status": order.status,
+    })
+

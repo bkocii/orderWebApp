@@ -6,4 +6,6 @@ urlpatterns = [
     path("waiter/", views.waiter_order_page, name="waiter_order_page"),
     path("live/", views.live_orders_page, name="live_orders_page"),
     path("submit-order/", views.submit_order, name="submit_order"),
+    path("orders/<int:order_id>/finish/", views.finish_order, name="finish_order"),
+    path("orders/<int:order_id>/cancel/", views.cancel_order, name="cancel_order"),
 ]

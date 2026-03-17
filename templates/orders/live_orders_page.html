@@ -178,8 +178,13 @@
             padding: 12px;
             font-weight: bold;
             color: white;
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.65;
             cursor: not-allowed;
-            opacity: 0.9;
         }
 
         .finish-btn {
@@ -217,10 +222,12 @@
             This screen currently loads all pending orders from the database. Real-time updates come next.
         </p>
 
+        <div id="page-message" style="margin-bottom: 14px; font-weight: bold;"></div>
+
         {% if pending_orders %}
             <div class="orders-grid">
                 {% for order in pending_orders %}
-                    <div class="order-card">
+                    <div class="order-card" id="order-card-{{ order.id }}" data-order-id="{{ order.id }}">
                         <div class="order-header">
                             <div>
                                 <div class="order-title">Order #{{ order.id }}</div>
@@ -255,8 +262,24 @@
                         <div class="order-footer">
                             <div class="order-total">Total: €{{ order.total }}</div>
                             <div class="order-actions">
-                                <button type="button" class="action-btn finish-btn">Finished</button>
-                                <button type="button" class="action-btn cancel-btn">Cancel</button>
+                                <button
+                                    type="button"
+                                    class="action-btn finish-btn"
+                                    data-action="finish"
+                                    data-url="{% url 'finish_order' order.id %}"
+                                    data-order-id="{{ order.id }}"
+                                >
+                                    Finished
+                                </button>
+                                <button
+                                    type="button"
+                                    class="action-btn cancel-btn"
+                                    data-action="cancel"
+                                    data-url="{% url 'cancel_order' order.id %}"
+                                    data-order-id="{{ order.id }}"
+                                >
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -269,5 +292,86 @@
             </div>
         {% endif %}
     </div>
+
+<script>
+    const pageMessage = document.getElementById("page-message");
+
+    function getCsrfToken() {
+        const cookieValue = document.cookie
+            .split("; ")
+            .find(row => row.startsWith("csrftoken="));
+        return cookieValue ? cookieValue.split("=")[1] : "";
+    }
+
+    function showMessage(text, color = "green") {
+        if (!pageMessage) return;
+        pageMessage.textContent = text;
+        pageMessage.style.color = color;
+    }
+
+    async function processOrder(button) {
+        const url = button.dataset.url;
+        const orderId = button.dataset.orderId;
+        const action = button.dataset.action;
+        const card = document.getElementById(`order-card-${orderId}`);
+
+        if (!url || !orderId || !card) return;
+
+        const siblingButtons = card.querySelectorAll(".action-btn");
+        siblingButtons.forEach(btn => btn.disabled = true);
+
+        const originalText = button.textContent;
+        button.textContent = action === "finish" ? "Finishing..." : "Canceling...";
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCsrfToken(),
+                    "Content-Type": "application/json"
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                showMessage(data.error || "Failed to process order.", "red");
+                siblingButtons.forEach(btn => btn.disabled = false);
+                button.textContent = originalText;
+                return;
+            }
+
+            card.remove();
+            showMessage(
+                action === "finish"
+                    ? `Order #${orderId} marked as finished.`
+                    : `Order #${orderId} canceled.`,
+                action === "finish" ? "green" : "red"
+            );
+
+            const remainingCards = document.querySelectorAll(".order-card");
+            const ordersGrid = document.querySelector(".orders-grid");
+            if (remainingCards.length === 0 && ordersGrid) {
+                ordersGrid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <h3>No pending orders</h3>
+                        <p>When waiters submit new orders, they will appear here.</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            showMessage("Network or server error while processing order.", "red");
+            siblingButtons.forEach(btn => btn.disabled = false);
+            button.textContent = originalText;
+        }
+    }
+
+    document.addEventListener("click", function (e) {
+        const button = e.target.closest(".action-btn[data-url]");
+        if (!button) return;
+        processOrder(button);
+    });
+</script>
+
 </body>
 </html>
