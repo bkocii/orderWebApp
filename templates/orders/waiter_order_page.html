@@ -3,10 +3,432 @@
 <head>
     <title>Waiter Order Page</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --primary: #111827;
+            --primary-hover: #1f2937;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --success: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+        }
+
+        .topbar h1 {
+            margin: 0 0 4px 0;
+            font-size: 20px;
+        }
+
+        .topbar-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            font-size: 18px;
+        }
+
+        .category-block {
+            margin-bottom: 24px;
+        }
+
+        .category-title {
+            font-size: 16px;
+            margin: 0 0 12px 0;
+            color: var(--muted);
+            text-transform: capitalize;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 12px;
+        }
+
+        .product-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            background: white;
+            cursor: pointer;
+            transition: 0.15s ease;
+            text-align: left;
+        }
+
+        .product-card:hover,
+        .product-card:active {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .product-name {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .cart-empty {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .cart-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .cart-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .cart-item-info {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .cart-item-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .cart-item-subtotal {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn,
+        .action-btn,
+        .nav-btn {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+        }
+
+        .qty-btn {
+            background: var(--primary);
+            color: white;
+            min-width: 40px;
+        }
+
+        .qty-btn.remove {
+            background: var(--danger);
+        }
+
+        .qty-value {
+            min-width: 24px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .field {
+            margin-bottom: 14px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .field textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .cart-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 14px;
+        }
+
+        .cart-total {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .action-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            padding: 14px;
+        }
+
+        .action-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .nav-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .nav-btn {
+            background: #e5e7eb;
+            color: var(--text);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        @media (min-width: 900px) {
+            .container {
+                grid-template-columns: 1.6fr 1fr;
+                align-items: start;
+            }
+
+            .cart-panel {
+                position: sticky;
+                top: 90px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Waiter Order Page</h1>
-    <p>This is the future mobile ordering page.</p>
-    <p><a href="{% url 'home' %}">Back Home</a></p>
+    <div class="topbar">
+        <h1>Waiter Order Page</h1>
+        <div class="topbar-meta">
+            <span>Logged in as: <strong>{{ request.user.username }}</strong></span>
+            <div class="nav-row">
+                <a class="nav-btn" href="{% url 'home' %}">Home</a>
+                <a class="nav-btn" href="{% url 'live_orders_page' %}">Live Orders</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>Products</h2>
+
+            {% regroup products by category as grouped_products %}
+
+            {% for group in grouped_products %}
+                <div class="category-block">
+                    <h3 class="category-title">{{ group.grouper }}</h3>
+                    <div class="product-grid">
+                        {% for product in group.list %}
+                            <button
+                                type="button"
+                                class="product-card"
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name }}"
+                                data-product-price="{{ product.price }}"
+                            >
+                                <div class="product-name">{{ product.name }}</div>
+                                <div class="product-price">€{{ product.price }}</div>
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% empty %}
+                <p>No active products found.</p>
+            {% endfor %}
+        </div>
+
+        <div class="section cart-panel">
+            <h2>Current Order</h2>
+
+            <div class="field">
+                <label for="table_number">Table Number</label>
+                <input type="text" id="table_number" placeholder="e.g. 5">
+            </div>
+
+            <div class="field">
+                <label for="note">Note</label>
+                <textarea id="note" placeholder="Optional note..."></textarea>
+            </div>
+
+            <div id="cart-empty" class="cart-empty">No items added yet.</div>
+            <div id="cart-list" class="cart-list"></div>
+
+            <div class="cart-footer">
+                <div class="cart-total">Total: €<span id="cart-total">0.00</span></div>
+                <button id="submit-order-btn" class="action-btn" disabled>
+                    Submit Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cart = {};
+        const cartList = document.getElementById("cart-list");
+        const cartEmpty = document.getElementById("cart-empty");
+        const cartTotalEl = document.getElementById("cart-total");
+        const submitOrderBtn = document.getElementById("submit-order-btn");
+
+        function formatMoney(value) {
+            return Number(value).toFixed(2);
+        }
+
+        function updateSubmitState() {
+            const hasItems = Object.keys(cart).length > 0;
+            submitOrderBtn.disabled = !hasItems;
+            cartEmpty.style.display = hasItems ? "none" : "block";
+        }
+
+        function renderCart() {
+            cartList.innerHTML = "";
+
+            let total = 0;
+
+            Object.values(cart).forEach(item => {
+                const subtotal = item.quantity * item.price;
+                total += subtotal;
+
+                const row = document.createElement("div");
+                row.className = "cart-item";
+
+                row.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-subtotal">€${formatMoney(item.price)} each · Subtotal €${formatMoney(subtotal)}</div>
+                    </div>
+                    <div class="qty-controls">
+                        <button type="button" class="qty-btn remove" data-action="decrease" data-id="${item.id}">-</button>
+                        <span class="qty-value">${item.quantity}</span>
+                        <button type="button" class="qty-btn" data-action="increase" data-id="${item.id}">+</button>
+                    </div>
+                `;
+
+                cartList.appendChild(row);
+            });
+
+            cartTotalEl.textContent = formatMoney(total);
+            updateSubmitState();
+        }
+
+        function addToCart(id, name, price) {
+            if (!cart[id]) {
+                cart[id] = {
+                    id: id,
+                    name: name,
+                    price: parseFloat(price),
+                    quantity: 1
+                };
+            } else {
+                cart[id].quantity += 1;
+            }
+            renderCart();
+        }
+
+        function changeQuantity(id, action) {
+            if (!cart[id]) return;
+
+            if (action === "increase") {
+                cart[id].quantity += 1;
+            } else if (action === "decrease") {
+                cart[id].quantity -= 1;
+                if (cart[id].quantity <= 0) {
+                    delete cart[id];
+                }
+            }
+
+            renderCart();
+        }
+
+        document.querySelectorAll(".product-card").forEach(btn => {
+            btn.addEventListener("click", function () {
+                addToCart(
+                    this.dataset.productId,
+                    this.dataset.productName,
+                    this.dataset.productPrice
+                );
+            });
+        });
+
+        cartList.addEventListener("click", function (e) {
+            const btn = e.target.closest("[data-action]");
+            if (!btn) return;
+
+            changeQuantity(btn.dataset.id, btn.dataset.action);
+        });
+
+        submitOrderBtn.addEventListener("click", function () {
+            alert("UI step complete. Submission comes in next step.");
+        });
+
+        renderCart();
+    </script>
 </body>
 </html>
