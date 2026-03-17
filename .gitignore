@@ -1,0 +1,103 @@
+#My files
+files/
+# Python/Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+*.pot
+*.pyc
+*.pyo
+
+# Django-specific
+*.sqlite3
+migrations/
+*.migrate
+*.backup
+
+# Virtual environment
+venv/
+.env/
+env/
+.venv/
+
+# Sensitive files
+.env
+*.env
+secrets.json
+*.pem
+*.key
+*.crt
+*.cert
+*.secret
+
+# Database files (PostgreSQL)
+*.sql
+*.sql.gz
+*.dump
+*.backup
+pgdata/
+
+# Redis
+*.rdb
+*.aof
+redis.conf
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+*.pid
+celery.log
+worker*.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*~
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Dependency files
+Pipfile.lock
+poetry.lock
+
+# Testing and coverage
+.coverage
+coverage.xml
+*.cover
+htmlcov/
+.tox/
+.nox/
+.cache
+
+# Documentation
+docs/_build/
+docs/build/
+
+# Miscellaneous
+*.bak
+*.swp
+*.tmp
+temp/
+tmp/
+*.cache
+node_modules/
+.bowerrc
+*.bowerrc
+
+# Production-specific
+*.prof
+gunicorn.conf.py
+supervisord.conf
+*.sock
+*.socket
