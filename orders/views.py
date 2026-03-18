@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from products.models import Product
 from .models import Order, OrderItem
+from .utils import broadcast_order_event
 
 
 @login_required
@@ -85,6 +86,28 @@ def submit_order(request):
         return JsonResponse({"success": False, "error": "No valid items to save."}, status=400)
 
     order.recalculate_total()
+    order.refresh_from_db()
+
+    broadcast_order_event({
+        "event": "order_created",
+        "order": {
+            "id": order.id,
+            "waiter": order.waiter.get_full_name() or order.waiter.username,
+            "table_number": order.table_number or "",
+            "note": order.note or "",
+            "status": order.status,
+            "created_at": order.created_at.strftime("%H:%M:%S"),
+            "total": str(order.total),
+            "items": [
+                {
+                    "name": item.product.name,
+                    "quantity": item.quantity,
+                    "subtotal": str(item.subtotal),
+                }
+                for item in order.items.select_related("product").all()
+            ],
+        }
+    })
 
     return JsonResponse({
         "success": True,
@@ -106,6 +129,14 @@ def finish_order(request, order_id):
     order.finished_at = timezone.now()
     order.save(update_fields=["status", "finished_at", "updated_at"])
 
+    broadcast_order_event({
+        "event": "order_updated",
+        "order": {
+            "id": order.id,
+            "status": order.status,
+        }
+    })
+
     return JsonResponse({
         "success": True,
         "order_id": order.id,
@@ -124,6 +155,14 @@ def cancel_order(request, order_id):
     order.status = Order.STATUS_CANCELED
     order.canceled_at = timezone.now()
     order.save(update_fields=["status", "canceled_at", "updated_at"])
+
+    broadcast_order_event({
+        "event": "order_updated",
+        "order": {
+            "id": order.id,
+            "status": order.status,
+        }
+    })
 
     return JsonResponse({
         "success": True,

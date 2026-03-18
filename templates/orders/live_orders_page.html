@@ -224,73 +224,71 @@
 
         <div id="page-message" style="margin-bottom: 14px; font-weight: bold;"></div>
 
-        {% if pending_orders %}
-            <div class="orders-grid">
-                {% for order in pending_orders %}
-                    <div class="order-card" id="order-card-{{ order.id }}" data-order-id="{{ order.id }}">
-                        <div class="order-header">
-                            <div>
-                                <div class="order-title">Order #{{ order.id }}</div>
-                                <div class="order-meta">
-                                    Waiter: <strong>{{ order.waiter.get_full_name|default:order.waiter.username }}</strong><br>
-                                    Table:
-                                    <strong>
-                                        {% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}
-                                    </strong><br>
-                                    Time: <strong>{{ order.created_at|date:"H:i:s" }}</strong>
-                                </div>
+        <div class="orders-grid" id="orders-grid">
+            {% for order in pending_orders %}
+                <div class="order-card" id="order-card-{{ order.id }}" data-order-id="{{ order.id }}">
+                    <div class="order-header">
+                        <div>
+                            <div class="order-title">Order #{{ order.id }}</div>
+                            <div class="order-meta">
+                                Waiter: <strong>{{ order.waiter.get_full_name|default:order.waiter.username }}</strong><br>
+                                Table:
+                                <strong>
+                                    {% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}
+                                </strong><br>
+                                Time: <strong>{{ order.created_at|date:"H:i:s" }}</strong>
                             </div>
-                            <span class="status-badge">PENDING</span>
                         </div>
+                        <span class="status-badge">PENDING</span>
+                    </div>
 
-                        {% if order.note %}
-                            <div class="note-box">
-                                <strong>Note:</strong> {{ order.note }}
-                            </div>
-                        {% endif %}
+                    {% if order.note %}
+                        <div class="note-box">
+                            <strong>Note:</strong> {{ order.note }}
+                        </div>
+                    {% endif %}
 
-                        <div class="items-title">Items</div>
-                        <ul class="items-list">
-                            {% for item in order.items.all %}
-                                <li>
-                                    <span>{{ item.product.name }} × {{ item.quantity }}</span>
-                                    <span>€{{ item.subtotal }}</span>
-                                </li>
-                            {% endfor %}
-                        </ul>
+                    <div class="items-title">Items</div>
+                    <ul class="items-list">
+                        {% for item in order.items.all %}
+                            <li>
+                                <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                                <span>€{{ item.subtotal }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
 
-                        <div class="order-footer">
-                            <div class="order-total">Total: €{{ order.total }}</div>
-                            <div class="order-actions">
-                                <button
-                                    type="button"
-                                    class="action-btn finish-btn"
-                                    data-action="finish"
-                                    data-url="{% url 'finish_order' order.id %}"
-                                    data-order-id="{{ order.id }}"
-                                >
-                                    Finished
-                                </button>
-                                <button
-                                    type="button"
-                                    class="action-btn cancel-btn"
-                                    data-action="cancel"
-                                    data-url="{% url 'cancel_order' order.id %}"
-                                    data-order-id="{{ order.id }}"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
+                    <div class="order-footer">
+                        <div class="order-total">Total: €{{ order.total }}</div>
+                        <div class="order-actions">
+                            <button
+                                type="button"
+                                class="action-btn finish-btn"
+                                data-action="finish"
+                                data-url="{% url 'finish_order' order.id %}"
+                                data-order-id="{{ order.id }}"
+                            >
+                                Finished
+                            </button>
+                            <button
+                                type="button"
+                                class="action-btn cancel-btn"
+                                data-action="cancel"
+                                data-url="{% url 'cancel_order' order.id %}"
+                                data-order-id="{{ order.id }}"
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <h3>No pending orders</h3>
-                <p>When waiters submit new orders, they will appear here.</p>
-            </div>
-        {% endif %}
+                </div>
+            {% empty %}
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <h3>No pending orders</h3>
+                    <p>When waiters submit new orders, they will appear here.</p>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 
 <script>
@@ -371,6 +369,162 @@
         if (!button) return;
         processOrder(button);
     });
+</script>
+
+<script>
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function buildOrderCard(order) {
+        const noteHtml = order.note
+            ? `
+                <div class="note-box">
+                    <strong>Note:</strong> ${escapeHtml(order.note)}
+                </div>
+            `
+            : "";
+
+        const itemsHtml = order.items.map(item => `
+            <li>
+                <span>${escapeHtml(item.name)} × ${item.quantity}</span>
+                <span>€${escapeHtml(item.subtotal)}</span>
+            </li>
+        `).join("");
+
+        return `
+            <div class="order-card" id="order-card-${order.id}" data-order-id="${order.id}">
+                <div class="order-header">
+                    <div>
+                        <div class="order-title">Order #${order.id}</div>
+                        <div class="order-meta">
+                            Waiter: <strong>${escapeHtml(order.waiter)}</strong><br>
+                            Table: <strong>${order.table_number ? escapeHtml(order.table_number) : "-"}</strong><br>
+                            Time: <strong>${escapeHtml(order.created_at)}</strong>
+                        </div>
+                    </div>
+                    <span class="status-badge">PENDING</span>
+                </div>
+
+                ${noteHtml}
+
+                <div class="items-title">Items</div>
+                <ul class="items-list">
+                    ${itemsHtml}
+                </ul>
+
+                <div class="order-footer">
+                    <div class="order-total">Total: €${escapeHtml(order.total)}</div>
+                    <div class="order-actions">
+                        <button
+                            type="button"
+                            class="action-btn finish-btn"
+                            data-action="finish"
+                            data-url="/orders/${order.id}/finish/"
+                            data-order-id="${order.id}"
+                        >
+                            Finished
+                        </button>
+                        <button
+                            type="button"
+                            class="action-btn cancel-btn"
+                            data-action="cancel"
+                            data-url="/orders/${order.id}/cancel/"
+                            data-order-id="${order.id}"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function removeEmptyStateIfNeeded() {
+        const ordersGrid = document.getElementById("orders-grid");
+        if (!ordersGrid) return;
+
+        const emptyState = document.querySelector(".empty-state");
+        const cards = ordersGrid.querySelectorAll(".order-card");
+
+        if (cards.length > 0 && emptyState) {
+            emptyState.remove();
+        }
+    }
+
+    function ensureEmptyStateIfNeeded() {
+        const ordersGrid = document.getElementById("orders-grid");
+        if (!ordersGrid) return;
+
+        const cards = ordersGrid.querySelectorAll(".order-card");
+        const hasEmptyState = !!document.querySelector(".empty-state");
+
+        if (cards.length === 0 && !hasEmptyState) {
+            ordersGrid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <h3>No pending orders</h3>
+                    <p>When waiters submit new orders, they will appear here.</p>
+                </div>
+            `;
+        }
+    }
+
+    function prependOrderCard(order) {
+        const ordersGrid = document.getElementById("orders-grid");
+        if (!ordersGrid) return;
+
+        const existing = document.getElementById(`order-card-${order.id}`);
+        if (existing) {
+            existing.remove();
+        }
+
+        removeEmptyStateIfNeeded();
+        ordersGrid.insertAdjacentHTML("afterbegin", buildOrderCard(order));
+    }
+
+    function removeOrderCard(orderId) {
+        const card = document.getElementById(`order-card-${orderId}`);
+        if (card) {
+            card.remove();
+        }
+        ensureEmptyStateIfNeeded();
+    }
+
+    (function connectLiveOrdersSocket() {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/orders/live/`);
+
+        socket.onmessage = function (event) {
+            const payload = JSON.parse(event.data);
+
+            if (payload.event === "order_created") {
+                prependOrderCard(payload.order);
+                showMessage(`New order #${payload.order.id} received.`, "green");
+            }
+
+            if (payload.event === "order_updated") {
+                removeOrderCard(payload.order.id);
+            }
+        };
+
+        socket.onopen = function () {
+            showMessage("Live connection active.", "green");
+        };
+
+        socket.onerror = function (event) {
+            console.error("WebSocket error:", event);
+        };
+
+        socket.onclose = function (event) {
+            console.error("WebSocket closed:", event);
+            showMessage("Live connection closed.", "red");
+        };
+    })();
 </script>
 
 </body>
