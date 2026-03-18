@@ -11,6 +11,28 @@ from .models import Order, OrderItem
 from .utils import broadcast_order_event
 
 
+def serialize_order(order):
+    return {
+        "id": order.id,
+        "waiter": order.waiter.get_full_name() or order.waiter.username,
+        "table_number": order.table_number or "",
+        "note": order.note or "",
+        "status": order.status,
+        "created_at": order.created_at.strftime("%H:%M:%S") if order.created_at else "",
+        "finished_at": order.finished_at.strftime("%H:%M:%S") if order.finished_at else "",
+        "canceled_at": order.canceled_at.strftime("%H:%M:%S") if order.canceled_at else "",
+        "total": str(order.total),
+        "items": [
+            {
+                "name": item.product.name,
+                "quantity": item.quantity,
+                "subtotal": str(item.subtotal),
+            }
+            for item in order.items.select_related("product").all()
+        ],
+    }
+
+
 @login_required
 def home(request):
     return render(request, "orders/home.html")
@@ -107,23 +129,7 @@ def submit_order(request):
 
     broadcast_order_event({
         "event": "order_created",
-        "order": {
-            "id": order.id,
-            "waiter": order.waiter.get_full_name() or order.waiter.username,
-            "table_number": order.table_number or "",
-            "note": order.note or "",
-            "status": order.status,
-            "created_at": order.created_at.strftime("%H:%M:%S"),
-            "total": str(order.total),
-            "items": [
-                {
-                    "name": item.product.name,
-                    "quantity": item.quantity,
-                    "subtotal": str(item.subtotal),
-                }
-                for item in order.items.select_related("product").all()
-            ],
-        }
+        "order": serialize_order(order),
     })
 
     return JsonResponse({
@@ -137,7 +143,10 @@ def submit_order(request):
 @staff_member_required(login_url="login")
 @require_POST
 def finish_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(
+        Order.objects.select_related("waiter").prefetch_related("items__product"),
+        id=order_id
+    )
 
     if order.status != Order.STATUS_PENDING:
         return JsonResponse({"success": False, "error": "Order already processed."}, status=400)
@@ -145,26 +154,28 @@ def finish_order(request, order_id):
     order.status = Order.STATUS_FINISHED
     order.finished_at = timezone.now()
     order.save(update_fields=["status", "finished_at", "updated_at"])
+    order.refresh_from_db()
 
     broadcast_order_event({
         "event": "order_updated",
-        "order": {
-            "id": order.id,
-            "status": order.status,
-        }
+        "order": serialize_order(order),
     })
 
     return JsonResponse({
         "success": True,
         "order_id": order.id,
         "new_status": order.status,
+        "order": serialize_order(order),
     })
 
 
 @staff_member_required(login_url="login")
 @require_POST
 def cancel_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(
+        Order.objects.select_related("waiter").prefetch_related("items__product"),
+        id=order_id
+    )
 
     if order.status != Order.STATUS_PENDING:
         return JsonResponse({"success": False, "error": "Order already processed."}, status=400)
@@ -172,18 +183,17 @@ def cancel_order(request, order_id):
     order.status = Order.STATUS_CANCELED
     order.canceled_at = timezone.now()
     order.save(update_fields=["status", "canceled_at", "updated_at"])
+    order.refresh_from_db()
 
     broadcast_order_event({
         "event": "order_updated",
-        "order": {
-            "id": order.id,
-            "status": order.status,
-        }
+        "order": serialize_order(order),
     })
 
     return JsonResponse({
         "success": True,
         "order_id": order.id,
         "new_status": order.status,
+        "order": serialize_order(order),
     })
 

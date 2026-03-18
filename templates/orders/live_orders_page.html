@@ -659,25 +659,10 @@
             }
 
             if (action === "finish") {
-                const orderData = {
-                    id: orderId,
-                    waiter: card.dataset.waiterName || "",
-                    table_number: card.querySelector(".order-meta strong")?.textContent || "",
-                    created_at: "",
-                    finished_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                    total: card.querySelector(".order-total").textContent.replace("Total: €", "").trim(),
-                    items: Array.from(card.querySelectorAll(".items-list li")).map(li => {
-                        const spans = li.querySelectorAll("span");
-                        return {
-                            name: spans[0]?.textContent.split(" × ")[0] || "",
-                            quantity: spans[0]?.textContent.split(" × ")[1] || "",
-                            subtotal: spans[1]?.textContent.replace("€", "").trim() || ""
-                        };
-                    })
-                };
-
                 removePendingCard(orderId);
-                prependFinishedCard(orderData);
+                if (data.order) {
+                    prependFinishedCard(data.order);
+                }
                 showMessage(`Order #${orderId} marked as finished.`, "green");
             } else {
                 removePendingCard(orderId);
@@ -720,6 +705,7 @@
             if (payload.event === "order_updated") {
                 if (payload.order.status === "finished") {
                     removePendingCard(payload.order.id);
+                    prependFinishedCard(payload.order);
                 } else if (payload.order.status === "canceled") {
                     removePendingCard(payload.order.id);
                 }
