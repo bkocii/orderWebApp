@@ -13,12 +13,10 @@
             --pending: #f59e0b;
             --success: #059669;
             --danger: #dc2626;
-            --dark: #111827;
+            --finished-bg: #f9fafb;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -55,6 +53,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .nav-btn {
@@ -67,7 +66,7 @@
         }
 
         .container {
-            max-width: 1300px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 18px;
         }
@@ -75,6 +74,26 @@
         .page-note {
             color: var(--muted);
             margin-bottom: 16px;
+        }
+
+        .waiter-section,
+        .finished-section {
+            margin-bottom: 26px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            margin: 0 0 12px 0;
+        }
+
+        .waiter-header {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
         }
 
         .orders-grid {
@@ -90,6 +109,43 @@
             border-radius: 14px;
             box-shadow: 0 3px 12px rgba(0,0,0,0.05);
             padding: 16px;
+        }
+
+        .order-card.finished-card {
+            background: var(--finished-bg);
+            opacity: 0.88;
+            border-left-color: var(--success);
+        }
+
+        .order-card.new-order {
+            animation: newOrderFlash 2.4s ease;
+        }
+
+        @keyframes newOrderFlash {
+            0% {
+                background: #ecfdf5;
+                border-left-color: #10b981;
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+            20% {
+                background: #d1fae5;
+                border-left-color: #059669;
+                transform: scale(1.015);
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18);
+            }
+            45% {
+                background: #ecfdf5;
+                border-left-color: #10b981;
+                transform: scale(1.01);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.10);
+            }
+            100% {
+                background: #ffffff;
+                border-left-color: #f59e0b;
+                transform: scale(1);
+                box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+            }
         }
 
         .order-header {
@@ -120,6 +176,11 @@
             padding: 6px 10px;
             border-radius: 999px;
             white-space: nowrap;
+        }
+
+        .status-badge.finished {
+            background: #d1fae5;
+            color: #065f46;
         }
 
         .note-box {
@@ -187,52 +248,16 @@
             cursor: not-allowed;
         }
 
-        .finish-btn {
-            background: var(--success);
-        }
-
-        .cancel-btn {
-            background: var(--danger);
-        }
+        .finish-btn { background: var(--success); }
+        .cancel-btn { background: var(--danger); }
 
         .empty-state {
             background: white;
             border: 1px dashed var(--border);
             border-radius: 14px;
-            padding: 32px 18px;
+            padding: 24px 18px;
             text-align: center;
             color: var(--muted);
-        }
-
-        .order-card.new-order {
-            animation: newOrderFlash 2.4s ease;
-        }
-
-        @keyframes newOrderFlash {
-            0% {
-                background: #ecfdf5;
-                border-left-color: #10b981;
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.00);
-            }
-            20% {
-                background: #d1fae5;
-                border-left-color: #059669;
-                transform: scale(1.015);
-                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18);
-            }
-            45% {
-                background: #ecfdf5;
-                border-left-color: #10b981;
-                transform: scale(1.01);
-                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.10);
-            }
-            100% {
-                background: #ffffff;
-                border-left-color: #f59e0b;
-                transform: scale(1);
-                box-shadow: 0 3px 12px rgba(0,0,0,0.05);
-            }
         }
     </style>
 </head>
@@ -240,7 +265,7 @@
     <div class="topbar">
         <h1>Live Orders</h1>
         <div class="topbar-meta">
-            <span>Pending orders for bar/base screen</span>
+            <span>Grouped by waiter with recent finished history</span>
             <div class="nav-row">
                 <a class="nav-btn" href="{% url 'home' %}">Home</a>
                 <a class="nav-btn" href="{% url 'waiter_order_page' %}">Waiter Page</a>
@@ -254,75 +279,118 @@
 
     <div class="container">
         <p class="page-note">
-            This screen currently loads all pending orders from the database. Real-time updates come next.
+            Pending orders stay grouped by waiter. Finished orders move to a recent history area and keep the latest 5.
         </p>
 
         <div id="page-message" style="margin-bottom: 14px; font-weight: bold;"></div>
 
-        <div class="orders-grid" id="orders-grid">
-            {% for order in pending_orders %}
-                <div class="order-card" id="order-card-{{ order.id }}" data-order-id="{{ order.id }}">
-                    <div class="order-header">
-                        <div>
-                            <div class="order-title">Order #{{ order.id }}</div>
-                            <div class="order-meta">
-                                Waiter: <strong>{{ order.waiter.get_full_name|default:order.waiter.username }}</strong><br>
-                                Table:
-                                <strong>
-                                    {% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}
-                                </strong><br>
-                                Time: <strong>{{ order.created_at|date:"H:i:s" }}</strong>
-                            </div>
+        <div id="pending-sections">
+            {% if grouped_pending %}
+                {% for waiter_name, waiter_orders in grouped_pending.items %}
+                    <div class="waiter-section" data-waiter-name="{{ waiter_name }}">
+                        <div class="waiter-header">{{ waiter_name }}</div>
+                        <div class="orders-grid">
+                            {% for order in waiter_orders %}
+                                <div class="order-card" id="order-card-{{ order.id }}" data-order-id="{{ order.id }}" data-waiter-name="{{ waiter_name }}">
+                                    <div class="order-header">
+                                        <div>
+                                            <div class="order-title">Order #{{ order.id }}</div>
+                                            <div class="order-meta">
+                                                Table: <strong>{% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}</strong><br>
+                                                Time: <strong>{{ order.created_at|date:"H:i:s" }}</strong>
+                                            </div>
+                                        </div>
+                                        <span class="status-badge">PENDING</span>
+                                    </div>
+
+                                    {% if order.note %}
+                                        <div class="note-box">
+                                            <strong>Note:</strong> {{ order.note }}
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="items-title">Items</div>
+                                    <ul class="items-list">
+                                        {% for item in order.items.all %}
+                                            <li>
+                                                <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                                                <span>€{{ item.subtotal }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+
+                                    <div class="order-footer">
+                                        <div class="order-total">Total: €{{ order.total }}</div>
+                                        <div class="order-actions">
+                                            <button
+                                                type="button"
+                                                class="action-btn finish-btn"
+                                                data-action="finish"
+                                                data-url="{% url 'finish_order' order.id %}"
+                                                data-order-id="{{ order.id }}"
+                                            >
+                                                Finished
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="action-btn cancel-btn"
+                                                data-action="cancel"
+                                                data-url="{% url 'cancel_order' order.id %}"
+                                                data-order-id="{{ order.id }}"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
-                        <span class="status-badge">PENDING</span>
                     </div>
-
-                    {% if order.note %}
-                        <div class="note-box">
-                            <strong>Note:</strong> {{ order.note }}
-                        </div>
-                    {% endif %}
-
-                    <div class="items-title">Items</div>
-                    <ul class="items-list">
-                        {% for item in order.items.all %}
-                            <li>
-                                <span>{{ item.product.name }} × {{ item.quantity }}</span>
-                                <span>€{{ item.subtotal }}</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-
-                    <div class="order-footer">
-                        <div class="order-total">Total: €{{ order.total }}</div>
-                        <div class="order-actions">
-                            <button
-                                type="button"
-                                class="action-btn finish-btn"
-                                data-action="finish"
-                                data-url="{% url 'finish_order' order.id %}"
-                                data-order-id="{{ order.id }}"
-                            >
-                                Finished
-                            </button>
-                            <button
-                                type="button"
-                                class="action-btn cancel-btn"
-                                data-action="cancel"
-                                data-url="{% url 'cancel_order' order.id %}"
-                                data-order-id="{{ order.id }}"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <div class="empty-state" style="grid-column: 1 / -1;">
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" id="pending-empty-state">
                     <h3>No pending orders</h3>
                     <p>When waiters submit new orders, they will appear here.</p>
                 </div>
-            {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="finished-section">
+            <h2 class="section-title">Recently Finished</h2>
+            <div class="orders-grid" id="recent-finished-grid">
+                {% for order in recent_finished_orders %}
+                    <div class="order-card finished-card" id="finished-order-card-{{ order.id }}" data-order-id="{{ order.id }}">
+                        <div class="order-header">
+                            <div>
+                                <div class="order-title">Order #{{ order.id }}</div>
+                                <div class="order-meta">
+                                    Waiter: <strong>{{ order.waiter.get_full_name|default:order.waiter.username }}</strong><br>
+                                    Table: <strong>{% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}</strong><br>
+                                    Finished: <strong>{{ order.finished_at|date:"H:i:s" }}</strong>
+                                </div>
+                            </div>
+                            <span class="status-badge finished">FINISHED</span>
+                        </div>
+
+                        <ul class="items-list">
+                            {% for item in order.items.all %}
+                                <li>
+                                    <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                                    <span>€{{ item.subtotal }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="order-footer">
+                            <div class="order-total">Total: €{{ order.total }}</div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state" id="finished-empty-state" style="grid-column: 1 / -1;">
+                        <p>No recently finished orders yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
@@ -340,6 +408,222 @@
         if (!pageMessage) return;
         pageMessage.textContent = text;
         pageMessage.style.color = color;
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function buildPendingCard(order) {
+        const noteHtml = order.note ? `
+            <div class="note-box">
+                <strong>Note:</strong> ${escapeHtml(order.note)}
+            </div>
+        ` : "";
+
+        const itemsHtml = order.items.map(item => `
+            <li>
+                <span>${escapeHtml(item.name)} × ${item.quantity}</span>
+                <span>€${escapeHtml(item.subtotal)}</span>
+            </li>
+        `).join("");
+
+        return `
+            <div class="order-card new-order" id="order-card-${order.id}" data-order-id="${order.id}" data-waiter-name="${escapeHtml(order.waiter)}">
+                <div class="order-header">
+                    <div>
+                        <div class="order-title">Order #${order.id}</div>
+                        <div class="order-meta">
+                            Table: <strong>${order.table_number ? escapeHtml(order.table_number) : "-"}</strong><br>
+                            Time: <strong>${escapeHtml(order.created_at)}</strong>
+                        </div>
+                    </div>
+                    <span class="status-badge">PENDING</span>
+                </div>
+
+                ${noteHtml}
+
+                <div class="items-title">Items</div>
+                <ul class="items-list">${itemsHtml}</ul>
+
+                <div class="order-footer">
+                    <div class="order-total">Total: €${escapeHtml(order.total)}</div>
+                    <div class="order-actions">
+                        <button type="button" class="action-btn finish-btn" data-action="finish" data-url="/orders/${order.id}/finish/" data-order-id="${order.id}">
+                            Finished
+                        </button>
+                        <button type="button" class="action-btn cancel-btn" data-action="cancel" data-url="/orders/${order.id}/cancel/" data-order-id="${order.id}">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function buildFinishedCard(order) {
+        const itemsHtml = order.items.map(item => `
+            <li>
+                <span>${escapeHtml(item.name)} × ${item.quantity}</span>
+                <span>€${escapeHtml(item.subtotal)}</span>
+            </li>
+        `).join("");
+
+        const finishedTime = order.finished_at || order.created_at || "";
+
+        return `
+            <div class="order-card finished-card" id="finished-order-card-${order.id}" data-order-id="${order.id}">
+                <div class="order-header">
+                    <div>
+                        <div class="order-title">Order #${order.id}</div>
+                        <div class="order-meta">
+                            Waiter: <strong>${escapeHtml(order.waiter)}</strong><br>
+                            Table: <strong>${order.table_number ? escapeHtml(order.table_number) : "-"}</strong><br>
+                            Finished: <strong>${escapeHtml(finishedTime)}</strong>
+                        </div>
+                    </div>
+                    <span class="status-badge finished">FINISHED</span>
+                </div>
+
+                <ul class="items-list">${itemsHtml}</ul>
+
+                <div class="order-footer">
+                    <div class="order-total">Total: €${escapeHtml(order.total)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function ensurePendingWaiterSection(waiterName) {
+        const pendingSections = document.getElementById("pending-sections");
+        let section = pendingSections.querySelector(`.waiter-section[data-waiter-name="${CSS.escape(waiterName)}"]`);
+
+        if (!section) {
+            const emptyState = document.getElementById("pending-empty-state");
+            if (emptyState) emptyState.remove();
+
+            const html = `
+                <div class="waiter-section" data-waiter-name="${escapeHtml(waiterName)}">
+                    <div class="waiter-header">${escapeHtml(waiterName)}</div>
+                    <div class="orders-grid"></div>
+                </div>
+            `;
+            pendingSections.insertAdjacentHTML("afterbegin", html);
+            section = pendingSections.querySelector(`.waiter-section[data-waiter-name="${CSS.escape(waiterName)}"]`);
+        }
+
+        return section;
+    }
+
+    function prependPendingOrderCard(order) {
+        const section = ensurePendingWaiterSection(order.waiter);
+        const grid = section.querySelector(".orders-grid");
+
+        const existing = document.getElementById(`order-card-${order.id}`);
+        if (existing) existing.remove();
+
+        grid.insertAdjacentHTML("afterbegin", buildPendingCard(order));
+
+        const card = document.getElementById(`order-card-${order.id}`);
+        if (card) {
+            setTimeout(() => card.classList.remove("new-order"), 2400);
+        }
+    }
+
+    function removePendingCard(orderId) {
+        const card = document.getElementById(`order-card-${orderId}`);
+        if (!card) return;
+
+        const section = card.closest(".waiter-section");
+        card.remove();
+
+        if (section) {
+            const remaining = section.querySelectorAll(".order-card");
+            if (remaining.length === 0) {
+                section.remove();
+            }
+        }
+
+        const pendingSections = document.getElementById("pending-sections");
+        const allSections = pendingSections.querySelectorAll(".waiter-section");
+        if (allSections.length === 0 && !document.getElementById("pending-empty-state")) {
+            pendingSections.innerHTML = `
+                <div class="empty-state" id="pending-empty-state">
+                    <h3>No pending orders</h3>
+                    <p>When waiters submit new orders, they will appear here.</p>
+                </div>
+            `;
+        }
+    }
+
+    function prependFinishedCard(order) {
+        const grid = document.getElementById("recent-finished-grid");
+        const emptyState = document.getElementById("finished-empty-state");
+        if (emptyState) emptyState.remove();
+
+        const existing = document.getElementById(`finished-order-card-${order.id}`);
+        if (existing) existing.remove();
+
+        grid.insertAdjacentHTML("afterbegin", buildFinishedCard(order));
+
+        const cards = grid.querySelectorAll(".finished-card");
+        if (cards.length > 5) {
+            for (let i = 5; i < cards.length; i++) {
+                cards[i].remove();
+            }
+        }
+    }
+
+    let audioContext = null;
+
+    function unlockAudio() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === "suspended") {
+                audioContext.resume();
+            }
+        } catch (error) {
+            console.warn("Audio unlock failed:", error);
+        }
+    }
+
+    document.addEventListener("click", unlockAudio, { once: true });
+    document.addEventListener("touchstart", unlockAudio, { once: true });
+
+    function playNewOrderBeep() {
+        const soundToggle = document.getElementById("sound-toggle");
+        if (!soundToggle || !soundToggle.checked) return;
+
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+
+            gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.22);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.22);
+        } catch (error) {
+            console.warn("Sound alert failed:", error);
+        }
     }
 
     async function processOrder(button) {
@@ -374,23 +658,30 @@
                 return;
             }
 
-            card.remove();
-            showMessage(
-                action === "finish"
-                    ? `Order #${orderId} marked as finished.`
-                    : `Order #${orderId} canceled.`,
-                action === "finish" ? "green" : "red"
-            );
+            if (action === "finish") {
+                const orderData = {
+                    id: orderId,
+                    waiter: card.dataset.waiterName || "",
+                    table_number: card.querySelector(".order-meta strong")?.textContent || "",
+                    created_at: "",
+                    finished_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    total: card.querySelector(".order-total").textContent.replace("Total: €", "").trim(),
+                    items: Array.from(card.querySelectorAll(".items-list li")).map(li => {
+                        const spans = li.querySelectorAll("span");
+                        return {
+                            name: spans[0]?.textContent.split(" × ")[0] || "",
+                            quantity: spans[0]?.textContent.split(" × ")[1] || "",
+                            subtotal: spans[1]?.textContent.replace("€", "").trim() || ""
+                        };
+                    })
+                };
 
-            const remainingCards = document.querySelectorAll(".order-card");
-            const ordersGrid = document.querySelector(".orders-grid");
-            if (remainingCards.length === 0 && ordersGrid) {
-                ordersGrid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <h3>No pending orders</h3>
-                        <p>When waiters submit new orders, they will appear here.</p>
-                    </div>
-                `;
+                removePendingCard(orderId);
+                prependFinishedCard(orderData);
+                showMessage(`Order #${orderId} marked as finished.`, "green");
+            } else {
+                removePendingCard(orderId);
+                showMessage(`Order #${orderId} canceled.`, "red");
             }
         } catch (error) {
             showMessage("Network or server error while processing order.", "red");
@@ -404,192 +695,6 @@
         if (!button) return;
         processOrder(button);
     });
-</script>
-
-<script>
-    function escapeHtml(value) {
-        return String(value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    function buildOrderCard(order) {
-        const noteHtml = order.note
-            ? `
-                <div class="note-box">
-                    <strong>Note:</strong> ${escapeHtml(order.note)}
-                </div>
-            `
-            : "";
-
-        const itemsHtml = order.items.map(item => `
-            <li>
-                <span>${escapeHtml(item.name)} × ${item.quantity}</span>
-                <span>€${escapeHtml(item.subtotal)}</span>
-            </li>
-        `).join("");
-
-        return `
-            <div class="order-card new-order" id="order-card-${order.id}" data-order-id="${order.id}">
-                <div class="order-header">
-                    <div>
-                        <div class="order-title">Order #${order.id}</div>
-                        <div class="order-meta">
-                            Waiter: <strong>${escapeHtml(order.waiter)}</strong><br>
-                            Table: <strong>${order.table_number ? escapeHtml(order.table_number) : "-"}</strong><br>
-                            Time: <strong>${escapeHtml(order.created_at)}</strong>
-                        </div>
-                    </div>
-                    <span class="status-badge">PENDING</span>
-                </div>
-
-                ${noteHtml}
-
-                <div class="items-title">Items</div>
-                <ul class="items-list">
-                    ${itemsHtml}
-                </ul>
-
-                <div class="order-footer">
-                    <div class="order-total">Total: €${escapeHtml(order.total)}</div>
-                    <div class="order-actions">
-                        <button
-                            type="button"
-                            class="action-btn finish-btn"
-                            data-action="finish"
-                            data-url="/orders/${order.id}/finish/"
-                            data-order-id="${order.id}"
-                        >
-                            Finished
-                        </button>
-                        <button
-                            type="button"
-                            class="action-btn cancel-btn"
-                            data-action="cancel"
-                            data-url="/orders/${order.id}/cancel/"
-                            data-order-id="${order.id}"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function removeEmptyStateIfNeeded() {
-        const ordersGrid = document.getElementById("orders-grid");
-        if (!ordersGrid) return;
-
-        const emptyState = document.querySelector(".empty-state");
-        const cards = ordersGrid.querySelectorAll(".order-card");
-
-        if (cards.length > 0 && emptyState) {
-            emptyState.remove();
-        }
-    }
-
-    function ensureEmptyStateIfNeeded() {
-        const ordersGrid = document.getElementById("orders-grid");
-        if (!ordersGrid) return;
-
-        const cards = ordersGrid.querySelectorAll(".order-card");
-        const hasEmptyState = !!document.querySelector(".empty-state");
-
-        if (cards.length === 0 && !hasEmptyState) {
-            ordersGrid.innerHTML = `
-                <div class="empty-state" style="grid-column: 1 / -1;">
-                    <h3>No pending orders</h3>
-                    <p>When waiters submit new orders, they will appear here.</p>
-                </div>
-            `;
-        }
-    }
-
-    function prependOrderCard(order) {
-        const ordersGrid = document.getElementById("orders-grid");
-        if (!ordersGrid) return;
-
-        const existing = document.getElementById(`order-card-${order.id}`);
-        if (existing) {
-            existing.remove();
-        }
-
-        removeEmptyStateIfNeeded();
-        ordersGrid.insertAdjacentHTML("afterbegin", buildOrderCard(order));
-
-        const card = document.getElementById(`order-card-${order.id}`);
-        if (card) {
-            setTimeout(() => card.classList.remove("new-order"), 2200);
-        }
-    }
-
-    function removeOrderCard(orderId) {
-        const card = document.getElementById(`order-card-${orderId}`);
-        if (card) {
-            card.remove();
-        }
-        ensureEmptyStateIfNeeded();
-    }
-
-    let audioContext = null;
-    let soundEnabledAfterInteraction = false;
-
-    function unlockAudio() {
-        if (soundEnabledAfterInteraction) return;
-
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-            if (audioContext.state === "suspended") {
-                audioContext.resume();
-            }
-
-            soundEnabledAfterInteraction = true;
-            console.log("Audio unlocked");
-        } catch (error) {
-            console.warn("Audio unlock failed:", error);
-        }
-    }
-
-    document.addEventListener("click", unlockAudio, { once: true });
-    document.addEventListener("touchstart", unlockAudio, { once: true });
-
-    function playNewOrderBeep() {
-        const soundToggle = document.getElementById("sound-toggle");
-        if (!soundToggle || !soundToggle.checked) return;
-
-        try {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-
-            if (audioContext.state === "suspended") {
-                audioContext.resume();
-            }
-
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.type = "sine";
-            oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-
-            gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.22);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.22);
-        } catch (error) {
-            console.warn("Sound alert failed:", error);
-        }
-    }
 
     let liveSocket = null;
     let reconnectDelay = 1500;
@@ -605,17 +710,19 @@
 
         liveSocket.onmessage = function (event) {
             const payload = JSON.parse(event.data);
-            console.log("WS payload:", payload);
 
             if (payload.event === "order_created") {
-                console.log("New order received:", payload.order.id);
-                prependOrderCard(payload.order);
+                prependPendingOrderCard(payload.order);
                 playNewOrderBeep();
                 showMessage(`New order #${payload.order.id} received.`, "green");
             }
 
             if (payload.event === "order_updated") {
-                removeOrderCard(payload.order.id);
+                if (payload.order.status === "finished") {
+                    removePendingCard(payload.order.id);
+                } else if (payload.order.status === "canceled") {
+                    removePendingCard(payload.order.id);
+                }
             }
         };
 
@@ -637,6 +744,5 @@
 
     connectLiveOrdersSocket();
 </script>
-
 </body>
 </html>

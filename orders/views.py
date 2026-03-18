@@ -31,7 +31,24 @@ def live_orders_page(request):
         .prefetch_related("items__product")
         .order_by("created_at")
     )
-    return render(request, "orders/live_orders_page.html", {"pending_orders": pending_orders})
+
+    recent_finished_orders = (
+        Order.objects
+        .filter(status=Order.STATUS_FINISHED)
+        .select_related("waiter")
+        .prefetch_related("items__product")
+        .order_by("-finished_at")[:5]
+    )
+
+    grouped_pending = {}
+    for order in pending_orders:
+        waiter_name = order.waiter.get_full_name() or order.waiter.username
+        grouped_pending.setdefault(waiter_name, []).append(order)
+
+    return render(request, "orders/live_orders_page.html", {
+        "grouped_pending": grouped_pending,
+        "recent_finished_orders": recent_finished_orders,
+    })
 
 
 @login_required
