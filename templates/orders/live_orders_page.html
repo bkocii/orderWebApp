@@ -203,6 +203,37 @@
             text-align: center;
             color: var(--muted);
         }
+
+        .order-card.new-order {
+            animation: newOrderFlash 2.4s ease;
+        }
+
+        @keyframes newOrderFlash {
+            0% {
+                background: #ecfdf5;
+                border-left-color: #10b981;
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.00);
+            }
+            20% {
+                background: #d1fae5;
+                border-left-color: #059669;
+                transform: scale(1.015);
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18);
+            }
+            45% {
+                background: #ecfdf5;
+                border-left-color: #10b981;
+                transform: scale(1.01);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.10);
+            }
+            100% {
+                background: #ffffff;
+                border-left-color: #f59e0b;
+                transform: scale(1);
+                box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+            }
+        }
     </style>
 </head>
 <body>
@@ -213,6 +244,10 @@
             <div class="nav-row">
                 <a class="nav-btn" href="{% url 'home' %}">Home</a>
                 <a class="nav-btn" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+                <label style="display:flex; align-items:center; gap:8px; font-size:14px;">
+                    <input type="checkbox" id="sound-toggle" checked>
+                    Sound alert
+                </label>
             </div>
         </div>
     </div>
@@ -377,7 +412,7 @@
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
+            .replace(/\"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
 
@@ -398,7 +433,7 @@
         `).join("");
 
         return `
-            <div class="order-card" id="order-card-${order.id}" data-order-id="${order.id}">
+            <div class="order-card new-order" id="order-card-${order.id}" data-order-id="${order.id}">
                 <div class="order-header">
                     <div>
                         <div class="order-title">Order #${order.id}</div>
@@ -485,6 +520,11 @@
 
         removeEmptyStateIfNeeded();
         ordersGrid.insertAdjacentHTML("afterbegin", buildOrderCard(order));
+
+        const card = document.getElementById(`order-card-${order.id}`);
+        if (card) {
+            setTimeout(() => card.classList.remove("new-order"), 2200);
+        }
     }
 
     function removeOrderCard(orderId) {
@@ -495,15 +535,82 @@
         ensureEmptyStateIfNeeded();
     }
 
-    (function connectLiveOrdersSocket() {
-        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/orders/live/`);
+    let audioContext = null;
+    let soundEnabledAfterInteraction = false;
 
-        socket.onmessage = function (event) {
+    function unlockAudio() {
+        if (soundEnabledAfterInteraction) return;
+
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            if (audioContext.state === "suspended") {
+                audioContext.resume();
+            }
+
+            soundEnabledAfterInteraction = true;
+            console.log("Audio unlocked");
+        } catch (error) {
+            console.warn("Audio unlock failed:", error);
+        }
+    }
+
+    document.addEventListener("click", unlockAudio, { once: true });
+    document.addEventListener("touchstart", unlockAudio, { once: true });
+
+    function playNewOrderBeep() {
+        const soundToggle = document.getElementById("sound-toggle");
+        if (!soundToggle || !soundToggle.checked) return;
+
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (audioContext.state === "suspended") {
+                audioContext.resume();
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+
+            gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.22);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.22);
+        } catch (error) {
+            console.warn("Sound alert failed:", error);
+        }
+    }
+
+    let liveSocket = null;
+    let reconnectDelay = 1500;
+
+    function connectLiveOrdersSocket() {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        liveSocket = new WebSocket(`${protocol}://${window.location.host}/ws/orders/live/`);
+
+        liveSocket.onopen = function () {
+            showMessage("Live connection active.", "green");
+            reconnectDelay = 1500;
+        };
+
+        liveSocket.onmessage = function (event) {
             const payload = JSON.parse(event.data);
+            console.log("WS payload:", payload);
 
             if (payload.event === "order_created") {
+                console.log("New order received:", payload.order.id);
                 prependOrderCard(payload.order);
+                playNewOrderBeep();
                 showMessage(`New order #${payload.order.id} received.`, "green");
             }
 
@@ -512,19 +619,23 @@
             }
         };
 
-        socket.onopen = function () {
-            showMessage("Live connection active.", "green");
-        };
-
-        socket.onerror = function (event) {
+        liveSocket.onerror = function (event) {
             console.error("WebSocket error:", event);
         };
 
-        socket.onclose = function (event) {
-            console.error("WebSocket closed:", event);
-            showMessage("Live connection closed.", "red");
+        liveSocket.onclose = function (event) {
+            console.warn("WebSocket closed:", event);
+            showMessage("Live connection lost. Reconnecting...", "red");
+
+            setTimeout(() => {
+                connectLiveOrdersSocket();
+            }, reconnectDelay);
+
+            reconnectDelay = Math.min(reconnectDelay * 2, 10000);
         };
-    })();
+    }
+
+    connectLiveOrdersSocket();
 </script>
 
 </body>
