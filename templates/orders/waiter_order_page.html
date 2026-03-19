@@ -1,9 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Waiter Order Page</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
+{% extends "base.html" %}
+
+{% block title %}Waiter Page | Bar Ordering System{% endblock %}
+
+{% block extra_css %}
+<style>
         :root {
             --bg: #f3f4f6;
             --card: #ffffff;
@@ -263,8 +263,11 @@
             }
         }
     </style>
-</head>
-<body>
+</style>
+{% endblock %}
+
+{% block content %}
+
     <div class="topbar">
         <h1>Waiter Order Page</h1>
         <div class="topbar-meta">
@@ -280,8 +283,8 @@
                 </div>
             </div>
             <div class="nav-row">
-                <a class="nav-btn" href="{% url 'home' %}">Home</a>
-                <a class="nav-btn" href="{% url 'live_orders_page' %}">Live Orders</a>
+                <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
+                <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
             </div>
         </div>
     </div>
@@ -351,6 +354,10 @@
             </div>
         </div>
     </div>
+
+{% endblock %}
+
+{% block extra_js %}
 
     <script>
     const cart = {};
@@ -582,5 +589,4 @@
     renderShiftState();
     renderCart();
 </script>
-</body>
-</html>
+{% endblock %}

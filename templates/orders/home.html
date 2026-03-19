@@ -1,25 +1,85 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Home</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-    <h1>Bar Ordering System</h1>
-    <p>Logged in as: {{ request.user.username }}</p>
+{% extends "base.html" %}
 
-    <ul>
-        <li><a href="{% url 'waiter_order_page' %}">Waiter Order Page</a></li>
-        {% if request.user.is_staff %}
-            <li><a href="{% url 'live_orders_page' %}">Live Orders Page</a></li>
-            <li><a href="{% url 'shift_summary_page' %}">Shift Summary</a></li>
+{% block title %}Home | Bar Ordering System{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <div class="topbar-row">
+        <h1>Bar Ordering System</h1>
+        <div class="topbar-subtitle">
+            Central access point for waiter ordering, live order handling, and shift management.
+        </div>
+        <div class="topbar-meta">
+            <div class="info-strip">
+                Logged in as: <strong>{{ request.user.username }}</strong>
+            </div>
+
+            <div class="nav-row">
+                <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+
+                {% if request.user.is_staff %}
+                    <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Shift Summary</a>
+                {% endif %}
+
+                <form method="post" action="{% url 'logout' %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <h2 class="section-title">Current Shift Status</h2>
+        <p>
+            Date: <strong>{{ business_date }}</strong>
+        </p>
+
+        {% if open_shift %}
+            <p>
+                Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
+                <span class="badge badge-success">OPEN</span>
+            </p>
+            <p class="muted">
+                Opened by: <strong>{{ open_shift.opened_by|default:"-" }}</strong>
+            </p>
+        {% else %}
+            <p>
+                <span class="badge badge-danger">NO OPEN SHIFT</span>
+            </p>
+            <p class="muted">
+                Waiter ordering is currently blocked until staff opens a new shift.
+            </p>
         {% endif %}
-        <li>
-            <form method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit">Logout</button>
-            </form>
-        </li>
-    </ul>
-</body>
-</html>
+    </div>
+
+    <div class="grid grid-2">
+        <div class="card">
+            <h2 class="section-title">Waiter Ordering</h2>
+            <p class="muted">
+                Use the waiter page to create orders quickly from a phone or tablet.
+            </p>
+            <div class="action-row">
+                <a class="btn-link btn-primary" href="{% url 'waiter_order_page' %}">Open Waiter Page</a>
+            </div>
+        </div>
+
+        {% if request.user.is_staff %}
+            <div class="card">
+                <h2 class="section-title">Live Operations</h2>
+                <p class="muted">
+                    Monitor active orders in real time, manage recently finished orders, and keep track of the current shift.
+                </p>
+                <div class="action-row">
+                    <a class="btn-link btn-primary" href="{% url 'live_orders_page' %}">Open Live Orders</a>
+                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Open Shift Summary</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

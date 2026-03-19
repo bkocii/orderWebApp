@@ -1,9 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Shift Summary</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
+{% extends "base.html" %}
+
+{% block title %}Shift Summary | Bar Ordering System{% endblock %}
+
+{% block extra_css %}
+<style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -99,24 +99,28 @@
         .amount-muted {
             color: #6b7280;
         }
-    </style>
-</head>
-<body>
+</style>
+{% endblock %}
+
+{% block content %}
     <div class="topbar">
         <h1>Daily Shift Summary</h1>
         <div class="muted">
             Business date: <strong>{{ business_date }}</strong>
         </div>
         <div class="nav-row">
-            <a class="nav-btn" href="{% url 'home' %}">Home</a>
-            <a class="nav-btn" href="{% url 'live_orders_page' %}">Live Orders</a>
+            <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
+            <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
 
             {% if open_shift %}
-                <button id="close-shift-btn" class="action-btn close-btn">
+                Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
+                <span class="badge badge-success">OPEN</span>
+                <button id="close-shift-btn" class="btn btn-dange">
                     Close Shift {{ open_shift.sequence_number }}
                 </button>
             {% else %}
-                <button id="open-shift-btn" class="action-btn open-btn">
+                <span class="badge badge-danger">NO OPEN SHIFT</span>
+                <button id="open-shift-btn" class="btn btn-dange">
                     Open New Shift
                 </button>
             {% endif %}
@@ -163,13 +167,42 @@
                         <hr style="margin: 18px 0; border: 0; border-top: 1px solid #e5e7eb;">
 
                         <h3>Shift Totals</h3>
-                        <p>Total orders: <strong>{{ summary.totals.total_orders|default:0 }}</strong></p>
-                        <p>Pending orders: <strong>{{ summary.totals.pending_orders|default:0 }}</strong></p>
-                        <p>Finished orders: <strong>{{ summary.totals.finished_orders|default:0 }}</strong></p>
-                        <p>Canceled orders: <strong>{{ summary.totals.canceled_orders|default:0 }}</strong></p>
-                        <p class="amount-muted">Total amount: <strong>€{{ summary.totals.total_amount|default:0|floatformat:2 }}</strong></p>
-                        <p class="amount-muted">Canceled amount: <strong>€{{ summary.totals.canceled_amount|default:0|floatformat:2 }}</strong></p>
-                        <p class="amount-final">Finished amount: €{{ summary.totals.finished_amount|default:0|floatformat:2 }}</p>
+                            <div class="kpi-grid">
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Total Orders</div>
+                                    <div class="kpi-value">{{ summary.totals.total_orders|default:0 }}</div>
+                                </div>
+
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Pending Orders</div>
+                                    <div class="kpi-value warning">{{ summary.totals.pending_orders|default:0 }}</div>
+                                </div>
+
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Finished Orders</div>
+                                    <div class="kpi-value success">{{ summary.totals.finished_orders|default:0 }}</div>
+                                </div>
+
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Canceled Orders</div>
+                                    <div class="kpi-value danger">{{ summary.totals.canceled_orders|default:0 }}</div>
+                                </div>
+
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Total Amount</div>
+                                    <div class="kpi-value">€{{ summary.totals.total_amount|default:0|floatformat:2 }}</div>
+                                </div>
+
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Finished Amount</div>
+                                    <div class="kpi-value success">€{{ summary.totals.finished_amount|default:0|floatformat:2 }}</div>
+                                </div>
+
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Canceled Amount</div>
+                                    <div class="kpi-value danger">€{{ summary.totals.canceled_amount|default:0|floatformat:2 }}</div>
+                                </div>
+                            </div>
 
                         <hr style="margin: 18px 0; border: 0; border-top: 1px solid #e5e7eb;">
 
@@ -223,15 +256,48 @@
 
             <div class="card">
                 <h2>Overall Daily Totals</h2>
-                <p>Total orders: <strong>{{ overall.total_orders|default:0 }}</strong></p>
-                <p>Pending orders: <strong>{{ overall.pending_orders|default:0 }}</strong></p>
-                <p>Finished orders: <strong>{{ overall.finished_orders|default:0 }}</strong></p>
-                <p>Canceled orders: <strong>{{ overall.canceled_orders|default:0 }}</strong></p>
-                <p class="amount-muted">Total amount: <strong>€{{ summary.totals.total_amount|default:0|floatformat:2 }}</strong></p>
-                <p class="amount-muted">Canceled amount: <strong>€{{ summary.totals.canceled_amount|default:0|floatformat:2 }}</strong></p>
-                <p class="amount-final">Finished amount: €{{ summary.totals.finished_amount|default:0|floatformat:2 }}</p>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Orders</div>
+                        <div class="kpi-value">{{ overall.total_orders|default:0 }}</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Pending Orders</div>
+                        <div class="kpi-value warning">{{ overall.pending_orders|default:0 }}</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Finished Orders</div>
+                        <div class="kpi-value success">{{ overall.finished_orders|default:0 }}</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Canceled Orders</div>
+                        <div class="kpi-value danger">{{ overall.canceled_orders|default:0 }}</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Amount</div>
+                        <div class="kpi-value">€{{ overall.total_amount|default:0|floatformat:2 }}</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Finished Amount</div>
+                        <div class="kpi-value success">€{{ overall.finished_amount|default:0|floatformat:2 }}</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Canceled Amount</div>
+                        <div class="kpi-value danger">€{{ overall.canceled_amount|default:0|floatformat:2 }}</div>
+                    </div>
+                </div>
             </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
 
     <script>
         const pageMessage = document.getElementById("page-message");
@@ -320,5 +386,5 @@
             });
         }
     </script>
-</body>
-</html>
+
+{% endblock %}

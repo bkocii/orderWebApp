@@ -61,7 +61,10 @@ def serialize_order(order):
 
 @login_required
 def home(request):
-    return render(request, "orders/home.html")
+    return render(request, "orders/home.html", {
+        "open_shift": get_open_shift(),
+        "business_date": get_current_business_date(),
+    })
 
 
 @login_required
