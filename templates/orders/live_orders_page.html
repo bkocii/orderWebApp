@@ -706,8 +706,10 @@
                 if (payload.order.status === "finished") {
                     removePendingCard(payload.order.id);
                     prependFinishedCard(payload.order);
+                    showMessage(`Order #${payload.order.id} marked as finished.`, "green");
                 } else if (payload.order.status === "canceled") {
                     removePendingCard(payload.order.id);
+                    showMessage(`Order #${payload.order.id} canceled.`, "red")
                 }
             }
         };
