@@ -109,18 +109,28 @@
             Business date: <strong>{{ business_date }}</strong>
         </div>
         <div class="nav-row">
+
+            <div class="info-strip" style="margin-top:12px;">
+                {% if open_shift %}
+                    Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
+                    <span class="badge badge-success">OPEN</span>
+                {% else %}
+                    <span class="badge badge-danger">NO OPEN SHIFT</span>
+                {% endif %}
+            </div>
+
             <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
             <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
 
             {% if open_shift %}
                 Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
                 <span class="badge badge-success">OPEN</span>
-                <button id="close-shift-btn" class="btn btn-dange">
+                <button id="close-shift-btn" class="btn btn-danger">
                     Close Shift {{ open_shift.sequence_number }}
                 </button>
             {% else %}
                 <span class="badge badge-danger">NO OPEN SHIFT</span>
-                <button id="open-shift-btn" class="btn btn-dange">
+                <button id="open-shift-btn" class="btn btn-success">
                     Open New Shift
                 </button>
             {% endif %}
@@ -148,23 +158,27 @@
             {% if shift_summaries %}
                 {% for summary in shift_summaries %}
                     <div class="card">
-                        <h2>Shift {{ summary.shift.sequence_number }}</h2>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+                            <div>
+                                <h2 style="margin:0 0 8px 0;">Shift {{ summary.shift.sequence_number }}</h2>
+                                <div class="muted">
+                                    Opened at: <strong>{{ summary.shift.opened_at }}</strong><br>
+                                    Opened by: <strong>{{ summary.shift.opened_by|default:"-" }}</strong><br>
+                                    Closed at: <strong>{{ summary.shift.closed_at|default:"-" }}</strong><br>
+                                    Closed by: <strong>{{ summary.shift.closed_by|default:"-" }}</strong>
+                                </div>
+                            </div>
 
-                        <p>
-                            Status:
-                            {% if summary.shift.status == "open" %}
-                                <span class="status-open">OPEN</span>
-                            {% else %}
-                                <span class="status-closed">CLOSED</span>
-                            {% endif %}
-                        </p>
+                            <div>
+                                {% if summary.shift.status == "open" %}
+                                    <span class="badge badge-success">OPEN</span>
+                                {% else %}
+                                    <span class="badge badge-danger">CLOSED</span>
+                                {% endif %}
+                            </div>
+                        </div>
 
-                        <p>Opened at: <strong>{{ summary.shift.opened_at }}</strong></p>
-                        <p>Opened by: <strong>{{ summary.shift.opened_by|default:"-" }}</strong></p>
-                        <p>Closed at: <strong>{{ summary.shift.closed_at|default:"-" }}</strong></p>
-                        <p>Closed by: <strong>{{ summary.shift.closed_by|default:"-" }}</strong></p>
-
-                        <hr style="margin: 18px 0; border: 0; border-top: 1px solid #e5e7eb;">
+                        <hr class="section-divider">
 
                         <h3>Shift Totals</h3>
                             <div class="kpi-grid">
@@ -194,17 +208,17 @@
                                 </div>
 
                                 <div class="kpi-card">
-                                    <div class="kpi-label">Finished Amount</div>
-                                    <div class="kpi-value success">€{{ summary.totals.finished_amount|default:0|floatformat:2 }}</div>
-                                </div>
-
-                                <div class="kpi-card">
                                     <div class="kpi-label">Canceled Amount</div>
                                     <div class="kpi-value danger">€{{ summary.totals.canceled_amount|default:0|floatformat:2 }}</div>
                                 </div>
+
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Finished Amount</div>
+                                    <div class="kpi-value success">€{{ summary.totals.finished_amount|default:0|floatformat:2 }}</div>
+                                </div>
                             </div>
 
-                        <hr style="margin: 18px 0; border: 0; border-top: 1px solid #e5e7eb;">
+                        <hr class="section-divider">
 
                         <h3>Waiter Totals for Shift {{ summary.shift.sequence_number }}</h3>
 
