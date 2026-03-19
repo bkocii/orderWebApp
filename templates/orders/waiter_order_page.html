@@ -270,7 +270,7 @@
         <div class="topbar-meta">
             <div>
                 <div>Logged in as: <strong>{{ request.user.username }}</strong></div>
-                <div>
+                <div id="shift-status-line">
                     Date: <strong>{{ business_date }}</strong> |
                     {% if open_shift %}
                         Shift: <strong>#{{ open_shift.sequence_number }}</strong>
@@ -289,7 +289,7 @@
     <div class="container">
 
         {% if not open_shift %}
-            <div class="section" style="border-color:#fecaca; background:#fef2f2;">
+            <div id="shift-warning-box" class="section" style="border-color:#fecaca; background:#fef2f2; {% if open_shift %}display:none;{% endif %}">
                 <h2 style="color:#b91c1c; margin-top:0;">Ordering Disabled</h2>
                 <p style="margin-bottom:0;">
                     There is no open shift right now. Please ask staff/admin to open a new shift.
@@ -382,7 +382,26 @@
         submitMessage.textContent = "";
     }
 
-    const hasOpenShift = {{ open_shift|yesno:"true,false" }};
+    const shiftStatusLine = document.getElementById("shift-status-line");
+    const shiftWarningBox = document.getElementById("shift-warning-box");
+    let hasOpenShift = {{ open_shift|yesno:"true,false" }};
+    let currentShiftNumber = {% if open_shift %}{{ open_shift.sequence_number }}{% else %}null{% endif %};
+
+    function renderShiftState() {
+        if (shiftStatusLine) {
+            if (hasOpenShift && currentShiftNumber) {
+                shiftStatusLine.innerHTML = `Date: <strong>{{ business_date }}</strong> | Shift: <strong>#${currentShiftNumber}</strong>`;
+            } else {
+                shiftStatusLine.innerHTML = `Date: <strong>{{ business_date }}</strong> | <span style="color:#dc2626; font-weight:bold;">No Open Shift</span>`;
+            }
+        }
+
+        if (shiftWarningBox) {
+            shiftWarningBox.style.display = hasOpenShift ? "none" : "block";
+        }
+
+        updateSubmitState();
+    }
 
     function updateSubmitState() {
         const hasItems = Object.keys(cart).length > 0;
@@ -534,6 +553,33 @@
 
     submitOrderBtn.addEventListener("click", submitOrder);
 
+    (function connectShiftSocket() {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/orders/live/`);
+
+        socket.onmessage = function (event) {
+            const payload = JSON.parse(event.data);
+
+            if (payload.event === "shift_updated") {
+                if (payload.shift.status === "open") {
+                    hasOpenShift = true;
+                    currentShiftNumber = payload.shift.sequence_number;
+                    showMessage(`Shift #${payload.shift.sequence_number} opened. Ordering enabled.`, "green");
+                } else if (payload.shift.status === "closed") {
+                    hasOpenShift = false;
+                    currentShiftNumber = null;
+                    showMessage(`Shift #${payload.shift.sequence_number} closed. Ordering disabled.`, "red");
+                }
+
+                renderShiftState();
+            }
+        };
+
+        socket.onclose = function () {
+            console.warn("Waiter shift socket closed");
+        };
+    })();
+    renderShiftState();
     renderCart();
 </script>
 </body>

@@ -6,7 +6,7 @@ class LiveOrdersConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope.get("user")
 
-        if not user or not user.is_authenticated or not user.is_staff:
+        if not user or not user.is_authenticated:
             await self.close()
             return
 

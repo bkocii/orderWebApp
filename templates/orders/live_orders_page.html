@@ -266,7 +266,7 @@
         <h1>Live Orders</h1>
         <div class="topbar-meta">
 
-            <div>
+            <div id="live-shift-status-line">
                 <div>Grouped by waiter with recent finished history</div>
                 <div>
                     Date: <strong>{{ business_date }}</strong> |
@@ -408,7 +408,28 @@
     </div>
 
 <script>
+
+    const liveShiftStatusLine = document.getElementById("live-shift-status-line");
+    let liveHasOpenShift = {{ open_shift|yesno:"true,false" }};
+    let liveCurrentShiftNumber = {% if open_shift %}{{ open_shift.sequence_number }}{% else %}null{% endif %};
+
     const pageMessage = document.getElementById("page-message");
+
+    function renderLiveShiftState() {
+        if (!liveShiftStatusLine) return;
+
+        liveShiftStatusLine.innerHTML = `
+            <div>Grouped by waiter with recent finished history</div>
+            <div>
+                Date: <strong>{{ business_date }}</strong> |
+                ${
+                    liveHasOpenShift && liveCurrentShiftNumber
+                        ? `Active shift: <strong>#${liveCurrentShiftNumber}</strong>`
+                        : `<span style="color:#dc2626; font-weight:bold;">No Open Shift</span>`
+                }
+            </div>
+        `;
+    }
 
     function getCsrfToken() {
         const cookieValue = document.cookie
@@ -709,6 +730,20 @@
         liveSocket.onmessage = function (event) {
             const payload = JSON.parse(event.data);
 
+            if (payload.event === "shift_updated") {
+                if (payload.shift.status === "open") {
+                    liveHasOpenShift = true;
+                    liveCurrentShiftNumber = payload.shift.sequence_number;
+                    showMessage(`Shift #${payload.shift.sequence_number} opened.`, "green");
+                } else if (payload.shift.status === "closed") {
+                    liveHasOpenShift = false;
+                    liveCurrentShiftNumber = null;
+                    showMessage(`Shift #${payload.shift.sequence_number} closed by ${payload.shift.closed_by || "staff"}.`, "red");
+                }
+
+                renderLiveShiftState();
+            }
+
             if (payload.event === "order_created") {
                 prependPendingOrderCard(payload.order);
                 playNewOrderBeep();
@@ -744,6 +779,7 @@
     }
 
     connectLiveOrdersSocket();
+    renderLiveShiftState();
 </script>
 </body>
 </html>

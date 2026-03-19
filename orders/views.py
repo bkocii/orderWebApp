@@ -260,6 +260,18 @@ def open_shift(request):
         opened_by=request.user,
     )
 
+    broadcast_order_event({
+        "event": "shift_updated",
+        "shift": {
+            "id": shift.id,
+            "business_date": str(shift.business_date),
+            "sequence_number": shift.sequence_number,
+            "status": shift.status,
+            "opened_by": shift.opened_by.get_full_name() or shift.opened_by.username if shift.opened_by else "",
+            "closed_by": "",
+        }
+    })
+
     return JsonResponse({
         "success": True,
         "message": f"Opened Shift {shift.sequence_number} for {shift.business_date}.",
@@ -348,6 +360,18 @@ def close_shift(request):
     shift.closed_at = timezone.now()
     shift.closed_by = request.user
     shift.save(update_fields=["status", "closed_at", "closed_by"])
+
+    broadcast_order_event({
+        "event": "shift_updated",
+        "shift": {
+            "id": shift.id,
+            "business_date": str(shift.business_date),
+            "sequence_number": shift.sequence_number,
+            "status": shift.status,
+            "opened_by": shift.opened_by.get_full_name() or shift.opened_by.username if shift.opened_by else "",
+            "closed_by": shift.closed_by.get_full_name() or shift.closed_by.username if shift.closed_by else "",
+        }
+    })
 
     return JsonResponse({
         "success": True,
