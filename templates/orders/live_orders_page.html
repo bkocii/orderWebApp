@@ -265,7 +265,19 @@
     <div class="topbar">
         <h1>Live Orders</h1>
         <div class="topbar-meta">
-            <span>Grouped by waiter with recent finished history</span>
+
+            <div>
+                <div>Grouped by waiter with recent finished history</div>
+                <div>
+                    Date: <strong>{{ business_date }}</strong> |
+                    {% if open_shift %}
+                        Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
+                    {% else %}
+                        <span style="color:#dc2626; font-weight:bold;">No Open Shift</span>
+                    {% endif %}
+                </div>
+            </div>
+
             <div class="nav-row">
                 <a class="nav-btn" href="{% url 'home' %}">Home</a>
                 <a class="nav-btn" href="{% url 'waiter_order_page' %}">Waiter Page</a>

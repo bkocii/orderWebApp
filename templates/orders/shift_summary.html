@@ -158,9 +158,9 @@
                         <p>Pending orders: <strong>{{ summary.totals.pending_orders|default:0 }}</strong></p>
                         <p>Finished orders: <strong>{{ summary.totals.finished_orders|default:0 }}</strong></p>
                         <p>Canceled orders: <strong>{{ summary.totals.canceled_orders|default:0 }}</strong></p>
-                        <p>Total amount: <strong>€{{ summary.totals.total_amount|default:"0.00" }}</strong></p>
-                        <p>Finished amount: <strong>€{{ summary.totals.finished_amount|default:"0.00" }}</strong></p>
-                        <p>Canceled amount: <strong>€{{ summary.totals.canceled_amount|default:"0.00" }}</strong></p>
+                        <p>Total amount: <strong>€{{ summary.totals.total_amount|default:0|floatformat:2 }}</strong></p>
+                        <p>Finished amount: <strong>€{{ summary.totals.finished_amount|default:0|floatformat:2 }}</strong></p>
+                        <p>Canceled amount: <strong>€{{ summary.totals.canceled_amount|default:0|floatformat:2 }}</strong></p>
 
                         <hr style="margin: 18px 0; border: 0; border-top: 1px solid #e5e7eb;">
 
@@ -194,9 +194,9 @@
                                             <td>{{ row.pending_orders|default:0 }}</td>
                                             <td>{{ row.finished_orders|default:0 }}</td>
                                             <td>{{ row.canceled_orders|default:0 }}</td>
-                                            <td>€{{ row.total_amount|default:"0.00" }}</td>
-                                            <td>€{{ row.finished_amount|default:"0.00" }}</td>
-                                            <td>€{{ row.canceled_amount|default:"0.00" }}</td>
+                                            <td>€{{ row.total_amount|default:0|floatformat:2 }}</td>
+                                            <td>€{{ row.finished_amount|default:0|floatformat:2 }}</td>
+                                            <td>€{{ row.canceled_amount|default:0|floatformat:2 }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -218,9 +218,9 @@
                 <p>Pending orders: <strong>{{ overall.pending_orders|default:0 }}</strong></p>
                 <p>Finished orders: <strong>{{ overall.finished_orders|default:0 }}</strong></p>
                 <p>Canceled orders: <strong>{{ overall.canceled_orders|default:0 }}</strong></p>
-                <p>Total amount: <strong>€{{ overall.total_amount|default:"0.00" }}</strong></p>
-                <p>Finished amount: <strong>€{{ overall.finished_amount|default:"0.00" }}</strong></p>
-                <p>Canceled amount: <strong>€{{ overall.canceled_amount|default:"0.00" }}</strong></p>
+                <p>Total amount: <strong>€{{ overall.total_amount|default:0|floatformat:2 }}</strong></p>
+                <p>Finished amount: <strong>€{{ overall.finished_amount|default:0|floatformat:2 }}</strong></p>
+                <p>Canceled amount: <strong>€{{ overall.canceled_amount|default:0|floatformat:2 }}</strong></p>
             </div>
     </div>
 

@@ -67,7 +67,13 @@ def home(request):
 @login_required
 def waiter_order_page(request):
     products = Product.objects.filter(is_active=True).order_by("category", "name")
-    return render(request, "orders/waiter_order_page.html", {"products": products})
+    open_shift = get_open_shift()
+
+    return render(request, "orders/waiter_order_page.html", {
+        "products": products,
+        "open_shift": open_shift,
+        "business_date": get_current_business_date(),
+    })
 
 
 @staff_member_required(login_url="login")
@@ -96,6 +102,8 @@ def live_orders_page(request):
     return render(request, "orders/live_orders_page.html", {
         "grouped_pending": grouped_pending,
         "recent_finished_orders": recent_finished_orders,
+        "open_shift": get_open_shift(),
+        "business_date": get_current_business_date(),
     })
 
 
