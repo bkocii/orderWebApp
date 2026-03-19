@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Shift
 
 
 class OrderItemInline(admin.TabularInline):
@@ -22,3 +22,9 @@ class OrderItemAdmin(admin.ModelAdmin):
     list_display = ("id", "order", "product", "quantity", "unit_price", "subtotal")
     list_filter = ("product",)
     search_fields = ("order__id", "product__name")
+
+
+@admin.register(Shift)
+class ShiftAdmin(admin.ModelAdmin):
+    list_display = ("business_date", "status", "opened_at", "closed_at")
+    list_filter = ("status", "business_date")

@@ -1,9 +1,30 @@
 from decimal import Decimal
-
+from django.utils import timezone
 from django.conf import settings
 from django.db import models
 
 from products.models import Product
+
+
+class Shift(models.Model):
+    STATUS_OPEN = "open"
+    STATUS_CLOSED = "closed"
+
+    STATUS_CHOICES = [
+        (STATUS_OPEN, "Open"),
+        (STATUS_CLOSED, "Closed"),
+    ]
+
+    business_date = models.DateField(default=timezone.localdate, unique=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_OPEN)
+    opened_at = models.DateTimeField(auto_now_add=True)
+    closed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["-business_date"]
+
+    def __str__(self):
+        return f"Shift {self.business_date} ({self.status})"
 
 
 class Order(models.Model):
@@ -29,6 +50,7 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     finished_at = models.DateTimeField(blank=True, null=True)
     canceled_at = models.DateTimeField(blank=True, null=True)
+    shift = models.ForeignKey(Shift, on_delete=models.PROTECT, related_name="orders", null=True, blank=True, )
     total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
 
     class Meta:

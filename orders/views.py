@@ -7,7 +7,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from products.models import Product
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Shift
 from .utils import broadcast_order_event
 
 
@@ -88,8 +88,14 @@ def submit_order(request):
     if not items:
         return JsonResponse({"success": False, "error": "No items selected."}, status=400)
 
+    shift, _ = Shift.objects.get_or_create(
+        business_date=timezone.localdate(),
+        defaults={"status": Shift.STATUS_OPEN},
+    )
+
     order = Order.objects.create(
         waiter=request.user,
+        shift=shift,
         table_number=table_number,
         note=note,
     )
