@@ -83,13 +83,8 @@ a {
     padding: 20px;
 }
 
-.card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 18px;
-    height: 100%;
+.container > .grid {
+    margin-top: 18px;
 }
 
 .card + .card {
@@ -305,16 +300,6 @@ hr.section-divider {
     margin: 18px 0;
     border: 0;
     border-top: 1px solid var(--border);
-}
-
-.grid {
-    display: grid;
-    gap: 18px;
-    align-items: stretch;
-}
-
-.grid-2 {
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 .card {

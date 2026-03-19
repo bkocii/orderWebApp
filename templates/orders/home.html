@@ -32,58 +32,56 @@
 </div>
 
 <div class="container">
-
     <div class="card">
         <h2 class="section-title">Current Shift Status</h2>
-        <p>
-            Date: <strong>{{ business_date }}</strong>
-        </p>
 
         {% if open_shift %}
-            <p>
+            <p style="margin:0 0 10px 0;">
                 Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
                 <span class="badge badge-success">OPEN</span>
             </p>
-            <p class="muted">
+            <p class="muted" style="margin:0;">
                 Opened by: <strong>{{ open_shift.opened_by|default:"-" }}</strong>
             </p>
         {% else %}
-            <p>
+            <p style="margin:0 0 10px 0;">
                 <span class="badge badge-danger">NO OPEN SHIFT</span>
             </p>
-            <p class="muted">
+            <p class="muted" style="margin:0;">
                 Waiter ordering is currently blocked until staff opens a new shift.
             </p>
         {% endif %}
     </div>
 
     <div class="grid grid-2">
-    <div class="card feature-card">
-        <div>
-            <h2 class="section-title">Waiter Ordering</h2>
-            <p class="muted">
-                Use the waiter page to create orders quickly from a phone or tablet.
-            </p>
-        </div>
-        <div class="action-row">
-            <a class="btn-link btn-primary" href="{% url 'waiter_order_page' %}">Open Waiter Page</a>
-        </div>
-    </div>
-
-    {% if request.user.is_staff %}
         <div class="card feature-card">
-            <div>
-                <h2 class="section-title">Live Operations</h2>
+            <div class="stack-sm">
+                <h2 class="section-title">Waiter Ordering</h2>
                 <p class="muted">
-                    Monitor active orders in real time, manage recently finished orders, and keep track of the current shift.
+                    Use the waiter page to create orders quickly from a phone or tablet.
                 </p>
             </div>
+
             <div class="action-row">
-                <a class="btn-link btn-primary" href="{% url 'live_orders_page' %}">Open Live Orders</a>
-                <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Open Shift Summary</a>
+                <a class="btn-link btn-primary" href="{% url 'waiter_order_page' %}">Open Waiter Page</a>
             </div>
         </div>
-    {% endif %}
-</div>
+
+        {% if request.user.is_staff %}
+            <div class="card feature-card">
+                <div class="stack-sm">
+                    <h2 class="section-title">Live Operations</h2>
+                    <p class="muted">
+                        Monitor active orders in real time, manage recently finished orders, and keep track of the current shift.
+                    </p>
+                </div>
+
+                <div class="action-row">
+                    <a class="btn-link btn-primary" href="{% url 'live_orders_page' %}">Open Live Orders</a>
+                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Open Shift Summary</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

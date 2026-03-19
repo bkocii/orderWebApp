@@ -68,12 +68,12 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 18px;
+            padding: 20px;
         }
 
         .page-note {
             color: var(--muted);
-            margin-bottom: 16px;
+            margin-bottom: 28px;
         }
 
         .waiter-section,
@@ -105,7 +105,7 @@
         }
 
         .order-card {
-            background: var(--card);
+            background: white;
             border: 1px solid var(--border);
             border-left: 6px solid var(--pending);
             border-radius: 14px;
@@ -114,7 +114,7 @@
         }
 
         .order-card.finished-card {
-            background: var(--finished-bg);
+            background: #f9fafb;
             opacity: 0.92;
             border-left-color: var(--success);
         }
@@ -164,7 +164,7 @@
 
         .order-title {
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 700;
             margin-bottom: 4px;
         }
 
@@ -199,7 +199,7 @@
         }
 
         .items-title {
-            font-weight: bold;
+            font-weight: 700;
             margin-bottom: 8px;
         }
 
@@ -229,7 +229,7 @@
 
         .order-total {
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 800;
             margin-bottom: 12px;
         }
 
@@ -254,8 +254,22 @@
             cursor: not-allowed;
         }
 
-        .finish-btn { background: var(--success); }
-        .cancel-btn { background: var(--danger); }
+        .finish-btn {
+            background: var(--success);
+            color: white;
+            flex: 1;
+        }
+
+        .cancel-btn {
+            background: var(--danger);
+            color: white;
+            flex: 1;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+        }
 
         .empty-state {
             background: white;
@@ -270,9 +284,14 @@
 
 {% block content %}
     <div class="topbar">
+    <div class="topbar-row">
         <h1>Live Orders</h1>
+        <div class="topbar-subtitle">
+            Real-time pending orders grouped by waiter, with recent finished history.
+        </div>
+
         <div class="topbar-meta">
-            <div id="live-shift-status-line">
+            <div id="live-shift-status-line" class="topbar-status">
                 <div>Grouped by waiter with recent finished history</div>
                 <div>
                     Date: <strong>{{ business_date }}</strong> |
@@ -295,6 +314,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <div class="container">
         <p class="page-note">
@@ -343,7 +363,7 @@
                                         <div class="order-actions">
                                             <button
                                                 type="button"
-                                                class="action-btn finish-btn"
+                                                class="btn finish-btn"
                                                 data-action="finish"
                                                 data-url="{% url 'finish_order' order.id %}"
                                                 data-order-id="{{ order.id }}"
@@ -352,7 +372,7 @@
                                             </button>
                                             <button
                                                 type="button"
-                                                class="action-btn cancel-btn"
+                                                class="btn cancel-btn"
                                                 data-action="cancel"
                                                 data-url="{% url 'cancel_order' order.id %}"
                                                 data-order-id="{{ order.id }}"
