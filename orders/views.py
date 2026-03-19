@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from products.models import Product
 from .models import Order, OrderItem, Shift
-from .utils import broadcast_order_event
+from .utils import broadcast_order_event, broadcast_shift_event
 from django.db.models import Sum, Count, Q
 
 
@@ -260,7 +260,7 @@ def open_shift(request):
         opened_by=request.user,
     )
 
-    broadcast_order_event({
+    broadcast_shift_event({
         "event": "shift_updated",
         "shift": {
             "id": shift.id,
@@ -361,7 +361,7 @@ def close_shift(request):
     shift.closed_by = request.user
     shift.save(update_fields=["status", "closed_at", "closed_by"])
 
-    broadcast_order_event({
+    broadcast_shift_event({
         "event": "shift_updated",
         "shift": {
             "id": shift.id,
