@@ -89,6 +89,7 @@ a {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 18px;
+    height: 100%;
 }
 
 .card + .card {
@@ -98,6 +99,7 @@ a {
 .grid {
     display: grid;
     gap: 18px;
+    align-items: stretch;
 }
 
 .grid-2 {
@@ -303,4 +305,77 @@ hr.section-divider {
     margin: 18px 0;
     border: 0;
     border-top: 1px solid var(--border);
+}
+
+.grid {
+    display: grid;
+    gap: 18px;
+    align-items: stretch;
+}
+
+.grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    height: 100%;
+}
+
+.feature-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-card .action-row {
+    margin-top: auto;
+    padding-top: 14px;
+}
+
+.page-header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.stack-sm > * + * {
+    margin-top: 8px;
+}
+
+.stack-md > * + * {
+    margin-top: 14px;
+}
+
+.topbar-status {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.card-subtle {
+    background: var(--surface-soft);
+}
+
+.empty-state {
+    background: white;
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    padding: 24px 18px;
+    text-align: center;
+    color: var(--muted);
 }

@@ -271,7 +271,7 @@
     <div class="topbar">
         <h1>Waiter Order Page</h1>
         <div class="topbar-meta">
-            <div>
+            <div class="topbar-status">
                 <div>Logged in as: <strong>{{ request.user.username }}</strong></div>
                 <div id="shift-status-line">
                     Date: <strong>{{ business_date }}</strong> |
@@ -284,7 +284,9 @@
             </div>
             <div class="nav-row">
                 <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
-                <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+                {% if request.user.is_staff %}
+                    <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+                {% endif %}
             </div>
         </div>
     </div>
