@@ -15,16 +15,39 @@ class Shift(models.Model):
         (STATUS_CLOSED, "Closed"),
     ]
 
-    business_date = models.DateField(default=timezone.localdate, unique=True)
+    business_date = models.DateField(default=timezone.localdate)
+    sequence_number = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_OPEN)
+
     opened_at = models.DateTimeField(auto_now_add=True)
     closed_at = models.DateTimeField(blank=True, null=True)
 
+    opened_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="opened_shifts",
+    )
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="closed_shifts",
+    )
+
     class Meta:
-        ordering = ["-business_date"]
+        ordering = ["-business_date", "-opened_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["business_date", "sequence_number"],
+                name="unique_shift_sequence_per_day",
+            )
+        ]
 
     def __str__(self):
-        return f"Shift {self.business_date} ({self.status})"
+        return f"{self.business_date} / Shift {self.sequence_number} ({self.status})"
 
 
 class Order(models.Model):

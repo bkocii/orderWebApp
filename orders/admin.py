@@ -26,5 +26,14 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 @admin.register(Shift)
 class ShiftAdmin(admin.ModelAdmin):
-    list_display = ("business_date", "status", "opened_at", "closed_at")
+    list_display = (
+        "business_date",
+        "sequence_number",
+        "status",
+        "opened_at",
+        "closed_at",
+        "opened_by",
+        "closed_by",
+    )
     list_filter = ("status", "business_date")
+    search_fields = ("business_date", "opened_by__username", "closed_by__username")

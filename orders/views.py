@@ -1,7 +1,7 @@
 import json
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
@@ -9,6 +9,32 @@ from django.utils import timezone
 from products.models import Product
 from .models import Order, OrderItem, Shift
 from .utils import broadcast_order_event
+from django.db.models import Sum, Count, Q
+
+
+def get_current_business_date():
+    return timezone.localdate()
+
+
+def get_open_shift(business_date=None):
+    business_date = business_date or get_current_business_date()
+    return (
+        Shift.objects
+        .filter(business_date=business_date, status=Shift.STATUS_OPEN)
+        .order_by("-opened_at")
+        .first()
+    )
+
+
+def get_next_shift_sequence(business_date=None):
+    business_date = business_date or get_current_business_date()
+    last_shift = (
+        Shift.objects
+        .filter(business_date=business_date)
+        .order_by("-sequence_number")
+        .first()
+    )
+    return 1 if not last_shift else last_shift.sequence_number + 1
 
 
 def serialize_order(order):
@@ -88,10 +114,13 @@ def submit_order(request):
     if not items:
         return JsonResponse({"success": False, "error": "No items selected."}, status=400)
 
-    shift, _ = Shift.objects.get_or_create(
-        business_date=timezone.localdate(),
-        defaults={"status": Shift.STATUS_OPEN},
-    )
+    shift = get_open_shift()
+
+    if not shift:
+        return JsonResponse(
+            {"success": False, "error": "No open shift. New orders are currently blocked."},
+            status=400
+        )
 
     order = Order.objects.create(
         waiter=request.user,
@@ -201,5 +230,122 @@ def cancel_order(request, order_id):
         "order_id": order.id,
         "new_status": order.status,
         "order": serialize_order(order),
+    })
+
+
+@staff_member_required(login_url="login")
+@require_POST
+def open_shift(request):
+    business_date = get_current_business_date()
+    existing_open = get_open_shift(business_date)
+
+    if existing_open:
+        return JsonResponse(
+            {"success": False, "error": "There is already an open shift for today."},
+            status=400
+        )
+
+    shift = Shift.objects.create(
+        business_date=business_date,
+        sequence_number=get_next_shift_sequence(business_date),
+        status=Shift.STATUS_OPEN,
+        opened_by=request.user,
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": f"Opened Shift {shift.sequence_number} for {shift.business_date}.",
+        "shift_id": shift.id,
+        "sequence_number": shift.sequence_number,
+        "business_date": str(shift.business_date),
+    })
+
+
+@staff_member_required(login_url="login")
+def shift_summary_page(request):
+    business_date = get_current_business_date()
+    open_shift = get_open_shift(business_date)
+
+    shifts_for_day = (
+        Shift.objects
+        .filter(business_date=business_date)
+        .select_related("opened_by", "closed_by")
+        .order_by("sequence_number")
+    )
+
+    shift_summaries = []
+
+    for shift in shifts_for_day:
+        shift_orders = Order.objects.filter(shift=shift)
+
+        shift_totals = shift_orders.aggregate(
+            total_orders=Count("id"),
+            pending_orders=Count("id", filter=Q(status=Order.STATUS_PENDING)),
+            finished_orders=Count("id", filter=Q(status=Order.STATUS_FINISHED)),
+            canceled_orders=Count("id", filter=Q(status=Order.STATUS_CANCELED)),
+            total_amount=Sum("total"),
+            finished_amount=Sum("total", filter=Q(status=Order.STATUS_FINISHED)),
+            canceled_amount=Sum("total", filter=Q(status=Order.STATUS_CANCELED)),
+        )
+
+        waiter_totals = (
+            shift_orders
+            .select_related("waiter")
+            .values("waiter__username", "waiter__first_name", "waiter__last_name")
+            .annotate(
+                total_orders=Count("id"),
+                pending_orders=Count("id", filter=Q(status=Order.STATUS_PENDING)),
+                finished_orders=Count("id", filter=Q(status=Order.STATUS_FINISHED)),
+                canceled_orders=Count("id", filter=Q(status=Order.STATUS_CANCELED)),
+                total_amount=Sum("total"),
+                finished_amount=Sum("total", filter=Q(status=Order.STATUS_FINISHED)),
+                canceled_amount=Sum("total", filter=Q(status=Order.STATUS_CANCELED)),
+            )
+            .order_by("waiter__username")
+        )
+
+        shift_summaries.append({
+            "shift": shift,
+            "totals": shift_totals,
+            "waiter_totals": waiter_totals,
+        })
+
+    overall = Order.objects.filter(shift__business_date=business_date).aggregate(
+        total_orders=Count("id"),
+        pending_orders=Count("id", filter=Q(status=Order.STATUS_PENDING)),
+        finished_orders=Count("id", filter=Q(status=Order.STATUS_FINISHED)),
+        canceled_orders=Count("id", filter=Q(status=Order.STATUS_CANCELED)),
+        total_amount=Sum("total"),
+        finished_amount=Sum("total", filter=Q(status=Order.STATUS_FINISHED)),
+        canceled_amount=Sum("total", filter=Q(status=Order.STATUS_CANCELED)),
+    )
+
+    return render(request, "orders/shift_summary.html", {
+        "business_date": business_date,
+        "open_shift": open_shift,
+        "shift_summaries": shift_summaries,
+        "overall": overall,
+    })
+
+
+@staff_member_required(login_url="login")
+@require_POST
+def close_shift(request):
+    shift = get_open_shift()
+
+    if not shift:
+        return JsonResponse({"success": False, "error": "No open shift to close."}, status=400)
+
+    shift.status = Shift.STATUS_CLOSED
+    shift.closed_at = timezone.now()
+    shift.closed_by = request.user
+    shift.save(update_fields=["status", "closed_at", "closed_by"])
+
+    return JsonResponse({
+        "success": True,
+        "message": f"Closed Shift {shift.sequence_number} for {shift.business_date}.",
+        "shift_id": shift.id,
+        "sequence_number": shift.sequence_number,
+        "business_date": str(shift.business_date),
     })
 
