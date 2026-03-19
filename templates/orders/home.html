@@ -58,28 +58,32 @@
     </div>
 
     <div class="grid grid-2">
-        <div class="card feature-card">
+    <div class="card feature-card">
+        <div>
             <h2 class="section-title">Waiter Ordering</h2>
             <p class="muted">
                 Use the waiter page to create orders quickly from a phone or tablet.
             </p>
-            <div class="action-row">
-                <a class="btn-link btn-primary" href="{% url 'waiter_order_page' %}">Open Waiter Page</a>
-            </div>
         </div>
+        <div class="action-row">
+            <a class="btn-link btn-primary" href="{% url 'waiter_order_page' %}">Open Waiter Page</a>
+        </div>
+    </div>
 
-        {% if request.user.is_staff %}
-            <div class="card feature-card">
+    {% if request.user.is_staff %}
+        <div class="card feature-card">
+            <div>
                 <h2 class="section-title">Live Operations</h2>
                 <p class="muted">
                     Monitor active orders in real time, manage recently finished orders, and keep track of the current shift.
                 </p>
-                <div class="action-row">
-                    <a class="btn-link btn-primary" href="{% url 'live_orders_page' %}">Open Live Orders</a>
-                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Open Shift Summary</a>
-                </div>
             </div>
-        {% endif %}
-    </div>
+            <div class="action-row">
+                <a class="btn-link btn-primary" href="{% url 'live_orders_page' %}">Open Live Orders</a>
+                <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Open Shift Summary</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
 </div>
 {% endblock %}

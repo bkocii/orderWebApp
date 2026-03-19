@@ -329,11 +329,20 @@ hr.section-divider {
 .feature-card {
     display: flex;
     flex-direction: column;
+    height: 100%;
+}
+
+.feature-card .section-title {
+    margin: 0 0 10px 0;
+}
+
+.feature-card p {
+    margin: 0;
 }
 
 .feature-card .action-row {
     margin-top: auto;
-    padding-top: 14px;
+    padding-top: 16px;
 }
 
 .page-header-meta {

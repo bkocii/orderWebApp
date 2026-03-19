@@ -88,12 +88,14 @@
 
         .waiter-header {
             margin-bottom: 12px;
-            padding: 10px 12px;
+            padding: 12px 14px;
             background: white;
             border: 1px solid var(--border);
+            border-left: 5px solid var(--primary);
             border-radius: 12px;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 700;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
         }
 
         .orders-grid {
@@ -113,12 +115,16 @@
 
         .order-card.finished-card {
             background: var(--finished-bg);
-            opacity: 0.88;
+            opacity: 0.92;
             border-left-color: var(--success);
         }
 
         .order-card.new-order {
             animation: newOrderFlash 2.4s ease;
+        }
+
+        .finished-section .order-card {
+            transform: scale(0.985);
         }
 
         @keyframes newOrderFlash {
