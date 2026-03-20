@@ -65,6 +65,7 @@ def serialize_category(category, include_products=False):
         "name": category.name,
         "slug": category.slug,
         "is_active": category.is_active,
+        "show_on_live_controls": category.show_on_live_controls,
         "sort_order": category.sort_order,
     }
 
@@ -130,7 +131,9 @@ def live_orders_page(request):
         .order_by("-finished_at")[:5]
     )
 
-    categories = ProductCategory.objects.order_by("sort_order", "name")
+    categories = ProductCategory.objects.filter(
+        show_on_live_controls=True
+    ).order_by("sort_order", "name")
 
     grouped_pending = {}
     for order in pending_orders:

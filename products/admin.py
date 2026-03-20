@@ -4,10 +4,10 @@ from .models import Product, ProductCategory
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "is_active", "sort_order", "slug")
-    list_filter = ("is_active",)
+    list_display = ("name", "is_active", "show_on_live_controls", "sort_order", "slug")
+    list_filter = ("is_active", "show_on_live_controls")
     search_fields = ("name", "slug")
-    list_editable = ("is_active", "sort_order")
+    list_editable = ("is_active", "show_on_live_controls", "sort_order")
     prepopulated_fields = {"slug": ("name",)}
 
 

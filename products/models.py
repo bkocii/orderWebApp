@@ -6,6 +6,7 @@ class ProductCategory(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
     is_active = models.BooleanField(default=True)
+    show_on_live_controls = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:

@@ -274,6 +274,7 @@
             background: #fef2f2;
             border-radius: 12px;
             padding: 14px;
+            grid-column: 1 / -1;
         }
 
         @media (min-width: 900px) {
@@ -283,12 +284,11 @@
             }
 
             .cart-panel {
-                position: relative;
-                top: 100px;
+                position: sticky;
+                top: 90px;
             }
         }
     </style>
-</style>
 {% endblock %}
 
 {% block content %}
