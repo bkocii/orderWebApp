@@ -4,113 +4,60 @@
 
 {% block extra_css %}
 <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f3f4f6;
-            color: #111827;
-        }
-        .topbar {
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 16px 20px;
-        }
-        .topbar h1 {
-            margin: 0 0 6px 0;
-        }
-        .nav-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            align-items: center;
-        }
-        .nav-btn, .action-btn {
-            text-decoration: none;
-            border: 0;
-            border-radius: 8px;
-            padding: 10px 14px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .nav-btn {
-            background: #e5e7eb;
-            color: #111827;
-        }
-        .open-btn {
-            background: #059669;
-            color: white;
-        }
-        .close-btn {
-            background: #dc2626;
-            color: white;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 20px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.04);
-        }
-        .card h2 {
-            margin-top: 0;
-        }
-        .message {
-            margin-bottom: 14px;
-            font-weight: bold;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-        }
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-            text-align: left;
-            font-size: 14px;
-        }
-        th {
-            background: #f9fafb;
-        }
-        .muted {
-            color: #6b7280;
-        }
-        .status-open {
-            color: #059669;
-            font-weight: bold;
-        }
-        .status-closed {
-            color: #dc2626;
-            font-weight: bold;
-        }
-        .amount-final {
-            font-size: 18px;
-            font-weight: 700;
-            color: #059669;
-        }
+    .summary-topbar-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
 
-        .amount-muted {
-            color: #6b7280;
-        }
+    .summary-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .summary-shift-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .summary-shift-meta {
+        color: var(--muted);
+        line-height: 1.6;
+    }
+
+    .summary-table-wrap {
+        overflow-x: auto;
+    }
+
+    .summary-finished-amount {
+        color: var(--success);
+        font-weight: 700;
+    }
+
+    .summary-page-message {
+        margin-bottom: 14px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-    <div class="topbar">
+<div class="topbar">
+    <div class="topbar-row">
         <h1>Daily Shift Summary</h1>
-        <div class="muted">
+        <div class="topbar-subtitle">
             Business date: <strong>{{ business_date }}</strong>
         </div>
-        <div class="nav-row">
 
-            <div class="info-strip" style="margin-top:12px;">
+        <div class="summary-topbar-meta">
+            <div class="info-strip">
                 {% if open_shift %}
                     Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
                     <span class="badge badge-success">OPEN</span>
@@ -119,286 +66,290 @@
                 {% endif %}
             </div>
 
-            <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
-            <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+            <div class="summary-actions">
+                <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
+                <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
 
-            {% if open_shift %}
-                Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
-                <span class="badge badge-success">OPEN</span>
-                <button id="close-shift-btn" class="btn btn-danger">
-                    Close Shift {{ open_shift.sequence_number }}
-                </button>
-            {% else %}
-                <span class="badge badge-danger">NO OPEN SHIFT</span>
-                <button id="open-shift-btn" class="btn btn-success">
-                    Open New Shift
-                </button>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="container">
-       <div id="page-message" class="message"></div>
-
-            <div class="card">
-                <h2>Current Shift Status</h2>
                 {% if open_shift %}
-                    <p>
-                        Open shift:
-                        <strong>Shift {{ open_shift.sequence_number }}</strong>
-                        <span class="status-open">(OPEN)</span>
-                    </p>
-                    <p>Opened at: <strong>{{ open_shift.opened_at }}</strong></p>
-                    <p>Opened by: <strong>{{ open_shift.opened_by|default:"-" }}</strong></p>
+                    <button id="close-shift-btn" class="btn btn-danger">
+                        Close Shift {{ open_shift.sequence_number }}
+                    </button>
                 {% else %}
-                    <p class="muted">No open shift right now.</p>
+                    <button id="open-shift-btn" class="btn btn-success">
+                        Open New Shift
+                    </button>
                 {% endif %}
             </div>
+        </div>
+    </div>
+</div>
 
-            {% if shift_summaries %}
-                {% for summary in shift_summaries %}
-                    <div class="card">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
-                            <div>
-                                <h2 style="margin:0 0 8px 0;">Shift {{ summary.shift.sequence_number }}</h2>
-                                <div class="muted">
-                                    Opened at: <strong>{{ summary.shift.opened_at }}</strong><br>
-                                    Opened by: <strong>{{ summary.shift.opened_by|default:"-" }}</strong><br>
-                                    Closed at: <strong>{{ summary.shift.closed_at|default:"-" }}</strong><br>
-                                    Closed by: <strong>{{ summary.shift.closed_by|default:"-" }}</strong>
-                                </div>
-                            </div>
+<div class="container">
+    <div id="page-message" class="message summary-page-message"></div>
 
-                            <div>
-                                {% if summary.shift.status == "open" %}
-                                    <span class="badge badge-success">OPEN</span>
-                                {% else %}
-                                    <span class="badge badge-danger">CLOSED</span>
-                                {% endif %}
-                            </div>
+    <div class="card">
+        <h2 class="section-title">Current Shift Status</h2>
+
+        {% if open_shift %}
+            <p style="margin:0 0 10px 0;">
+                Open shift: <strong>Shift {{ open_shift.sequence_number }}</strong>
+                <span class="badge badge-success">OPEN</span>
+            </p>
+            <p class="muted" style="margin:0 0 8px 0;">
+                Opened at: <strong>{{ open_shift.opened_at }}</strong>
+            </p>
+            <p class="muted" style="margin:0;">
+                Opened by: <strong>{{ open_shift.opened_by|default:"-" }}</strong>
+            </p>
+        {% else %}
+            <p class="muted" style="margin:0;">No open shift right now.</p>
+        {% endif %}
+    </div>
+
+    {% if shift_summaries %}
+        {% for summary in shift_summaries %}
+            <div class="card">
+                <div class="summary-shift-header">
+                    <div>
+                        <h2 style="margin:0 0 8px 0;">Shift {{ summary.shift.sequence_number }}</h2>
+                        <div class="summary-shift-meta">
+                            Opened at: <strong>{{ summary.shift.opened_at }}</strong><br>
+                            Opened by: <strong>{{ summary.shift.opened_by|default:"-" }}</strong><br>
+                            Closed at: <strong>{{ summary.shift.closed_at|default:"-" }}</strong><br>
+                            Closed by: <strong>{{ summary.shift.closed_by|default:"-" }}</strong>
                         </div>
+                    </div>
 
-                        <hr class="section-divider">
-
-                        <h3>Shift Totals</h3>
-                            <div class="kpi-grid">
-                                <div class="kpi-card">
-                                    <div class="kpi-label">Total Orders</div>
-                                    <div class="kpi-value">{{ summary.totals.total_orders|default:0 }}</div>
-                                </div>
-
-                                <div class="kpi-card">
-                                    <div class="kpi-label">Pending Orders</div>
-                                    <div class="kpi-value warning">{{ summary.totals.pending_orders|default:0 }}</div>
-                                </div>
-
-                                <div class="kpi-card">
-                                    <div class="kpi-label">Finished Orders</div>
-                                    <div class="kpi-value success">{{ summary.totals.finished_orders|default:0 }}</div>
-                                </div>
-
-                                <div class="kpi-card">
-                                    <div class="kpi-label">Canceled Orders</div>
-                                    <div class="kpi-value danger">{{ summary.totals.canceled_orders|default:0 }}</div>
-                                </div>
-
-                                <div class="kpi-card">
-                                    <div class="kpi-label">Total Amount</div>
-                                    <div class="kpi-value">€{{ summary.totals.total_amount|default:0|floatformat:2 }}</div>
-                                </div>
-
-                                <div class="kpi-card">
-                                    <div class="kpi-label">Canceled Amount</div>
-                                    <div class="kpi-value danger">€{{ summary.totals.canceled_amount|default:0|floatformat:2 }}</div>
-                                </div>
-
-                                <div class="kpi-card">
-                                    <div class="kpi-label">Finished Amount</div>
-                                    <div class="kpi-value success">€{{ summary.totals.finished_amount|default:0|floatformat:2 }}</div>
-                                </div>
-                            </div>
-
-                        <hr class="section-divider">
-
-                        <h3>Waiter Totals for Shift {{ summary.shift.sequence_number }}</h3>
-
-                        {% if summary.waiter_totals %}
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Waiter</th>
-                                        <th>Total Orders</th>
-                                        <th>Pending</th>
-                                        <th>Finished</th>
-                                        <th>Canceled</th>
-                                        <th>Total Amount</th>
-                                        <th>Canceled Amount</th>
-                                        <th>Finished Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in summary.waiter_totals %}
-                                        <tr>
-                                            <td>
-                                                {% if row.waiter__first_name or row.waiter__last_name %}
-                                                    {{ row.waiter__first_name }} {{ row.waiter__last_name }}
-                                                {% else %}
-                                                    {{ row.waiter__username }}
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ row.total_orders|default:0 }}</td>
-                                            <td>{{ row.pending_orders|default:0 }}</td>
-                                            <td>{{ row.finished_orders|default:0 }}</td>
-                                            <td>{{ row.canceled_orders|default:0 }}</td>
-                                            <td>€{{ row.total_amount|default:0|floatformat:2 }}</td>
-                                            <td>€{{ row.canceled_amount|default:0|floatformat:2 }}</td>
-                                            <td><strong style="color:#059669;">€{{ row.finished_amount|default:0|floatformat:2 }}</strong></td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <div>
+                        {% if summary.shift.status == "open" %}
+                            <span class="badge badge-success">OPEN</span>
                         {% else %}
-                            <p class="muted">No waiter orders recorded for this shift.</p>
+                            <span class="badge badge-danger">CLOSED</span>
                         {% endif %}
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="card">
-                    <p class="muted">No shifts created for this day yet.</p>
                 </div>
-            {% endif %}
 
-            <div class="card">
-                <h2>Overall Daily Totals</h2>
+                <hr class="section-divider">
 
+                <h3>Shift Totals</h3>
                 <div class="kpi-grid">
                     <div class="kpi-card">
                         <div class="kpi-label">Total Orders</div>
-                        <div class="kpi-value">{{ overall.total_orders|default:0 }}</div>
+                        <div class="kpi-value">{{ summary.totals.total_orders|default:0 }}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-label">Pending Orders</div>
-                        <div class="kpi-value warning">{{ overall.pending_orders|default:0 }}</div>
+                        <div class="kpi-value warning">{{ summary.totals.pending_orders|default:0 }}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-label">Finished Orders</div>
-                        <div class="kpi-value success">{{ overall.finished_orders|default:0 }}</div>
+                        <div class="kpi-value success">{{ summary.totals.finished_orders|default:0 }}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-label">Canceled Orders</div>
-                        <div class="kpi-value danger">{{ overall.canceled_orders|default:0 }}</div>
+                        <div class="kpi-value danger">{{ summary.totals.canceled_orders|default:0 }}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-label">Total Amount</div>
-                        <div class="kpi-value">€{{ overall.total_amount|default:0|floatformat:2 }}</div>
-                    </div>
-
-                    <div class="kpi-card">
-                        <div class="kpi-label">Finished Amount</div>
-                        <div class="kpi-value success">€{{ overall.finished_amount|default:0|floatformat:2 }}</div>
+                        <div class="kpi-value">€{{ summary.totals.total_amount|default:0|floatformat:2 }}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-label">Canceled Amount</div>
-                        <div class="kpi-value danger">€{{ overall.canceled_amount|default:0|floatformat:2 }}</div>
+                        <div class="kpi-value danger">€{{ summary.totals.canceled_amount|default:0|floatformat:2 }}</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Finished Amount</div>
+                        <div class="kpi-value success">€{{ summary.totals.finished_amount|default:0|floatformat:2 }}</div>
                     </div>
                 </div>
+
+                <hr class="section-divider">
+
+                <h3>Waiter Totals for Shift {{ summary.shift.sequence_number }}</h3>
+
+                {% if summary.waiter_totals %}
+                    <div class="summary-table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Waiter</th>
+                                    <th>Total Orders</th>
+                                    <th>Pending</th>
+                                    <th>Finished</th>
+                                    <th>Canceled</th>
+                                    <th>Total Amount</th>
+                                    <th>Canceled Amount</th>
+                                    <th>Finished Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in summary.waiter_totals %}
+                                    <tr>
+                                        <td>
+                                            {% if row.waiter__first_name or row.waiter__last_name %}
+                                                {{ row.waiter__first_name }} {{ row.waiter__last_name }}
+                                            {% else %}
+                                                {{ row.waiter__username }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ row.total_orders|default:0 }}</td>
+                                        <td>{{ row.pending_orders|default:0 }}</td>
+                                        <td>{{ row.finished_orders|default:0 }}</td>
+                                        <td>{{ row.canceled_orders|default:0 }}</td>
+                                        <td>€{{ row.total_amount|default:0|floatformat:2 }}</td>
+                                        <td>€{{ row.canceled_amount|default:0|floatformat:2 }}</td>
+                                        <td><span class="summary-finished-amount">€{{ row.finished_amount|default:0|floatformat:2 }}</span></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="muted">No waiter orders recorded for this shift.</p>
+                {% endif %}
             </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <p class="muted" style="margin:0;">No shifts created for this day yet.</p>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <h2 class="section-title">Overall Daily Totals</h2>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Orders</div>
+                <div class="kpi-value">{{ overall.total_orders|default:0 }}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Pending Orders</div>
+                <div class="kpi-value warning">{{ overall.pending_orders|default:0 }}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Finished Orders</div>
+                <div class="kpi-value success">{{ overall.finished_orders|default:0 }}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Canceled Orders</div>
+                <div class="kpi-value danger">{{ overall.canceled_orders|default:0 }}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Total Amount</div>
+                <div class="kpi-value">€{{ overall.total_amount|default:0|floatformat:2 }}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Canceled Amount</div>
+                <div class="kpi-value danger">€{{ overall.canceled_amount|default:0|floatformat:2 }}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Finished Amount</div>
+                <div class="kpi-value success">€{{ overall.finished_amount|default:0|floatformat:2 }}</div>
+            </div>
+        </div>
     </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    const pageMessage = document.getElementById("page-message");
+    const openShiftBtn = document.getElementById("open-shift-btn");
+    const closeShiftBtn = document.getElementById("close-shift-btn");
 
-    <script>
-        const pageMessage = document.getElementById("page-message");
-        const openShiftBtn = document.getElementById("open-shift-btn");
-        const closeShiftBtn = document.getElementById("close-shift-btn");
+    function getCsrfToken() {
+        const cookieValue = document.cookie
+            .split("; ")
+            .find(row => row.startsWith("csrftoken="));
+        return cookieValue ? cookieValue.split("=")[1] : "";
+    }
 
-        function getCsrfToken() {
-            const cookieValue = document.cookie
-                .split("; ")
-                .find(row => row.startsWith("csrftoken="));
-            return cookieValue ? cookieValue.split("=")[1] : "";
-        }
+    function showMessage(text, color = "green") {
+        pageMessage.textContent = text;
+        pageMessage.style.color = color;
+    }
 
-        function showMessage(text, color = "green") {
-            pageMessage.textContent = text;
-            pageMessage.style.color = color;
-        }
+    if (openShiftBtn) {
+        openShiftBtn.addEventListener("click", async function () {
+            openShiftBtn.disabled = true;
+            openShiftBtn.textContent = "Opening...";
 
-        if (openShiftBtn) {
-            openShiftBtn.addEventListener("click", async function () {
-                openShiftBtn.disabled = true;
-                openShiftBtn.textContent = "Opening...";
-
-                try {
-                    const response = await fetch("{% url 'open_shift' %}", {
-                        method: "POST",
-                        headers: {
-                            "X-CSRFToken": getCsrfToken(),
-                            "Content-Type": "application/json"
-                        }
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok || !data.success) {
-                        showMessage(data.error || "Failed to open shift.", "red");
-                        openShiftBtn.disabled = false;
-                        openShiftBtn.textContent = "Open New Shift";
-                        return;
+            try {
+                const response = await fetch("{% url 'open_shift' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCsrfToken(),
+                        "Content-Type": "application/json"
                     }
+                });
 
-                    showMessage(data.message, "green");
-                    window.location.reload();
-                } catch (error) {
-                    showMessage("Network or server error while opening shift.", "red");
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showMessage(data.error || "Failed to open shift.", "red");
                     openShiftBtn.disabled = false;
                     openShiftBtn.textContent = "Open New Shift";
-                }
-            });
-        }
-
-        if (closeShiftBtn) {
-            closeShiftBtn.addEventListener("click", async function () {
-                if (!confirm("Close the current shift? New orders will be blocked until a new shift is opened.")) {
                     return;
                 }
 
-                closeShiftBtn.disabled = true;
-                closeShiftBtn.textContent = "Closing...";
+                showMessage(data.message, "green");
+                window.location.reload();
+            } catch (error) {
+                showMessage("Network or server error while opening shift.", "red");
+                openShiftBtn.disabled = false;
+                openShiftBtn.textContent = "Open New Shift";
+            }
+        });
+    }
 
-                try {
-                    const response = await fetch("{% url 'close_shift' %}", {
-                        method: "POST",
-                        headers: {
-                            "X-CSRFToken": getCsrfToken(),
-                            "Content-Type": "application/json"
-                        }
-                    });
+    if (closeShiftBtn) {
+        closeShiftBtn.addEventListener("click", async function () {
+            if (!confirm("Close the current shift? New orders will be blocked until a new shift is opened.")) {
+                return;
+            }
 
-                    const data = await response.json();
+            closeShiftBtn.disabled = true;
+            closeShiftBtn.textContent = "Closing...";
 
-                    if (!response.ok || !data.success) {
-                        showMessage(data.error || "Failed to close shift.", "red");
-                        closeShiftBtn.disabled = false;
-                        closeShiftBtn.textContent = "Close Shift";
-                        return;
+            try {
+                const response = await fetch("{% url 'close_shift' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCsrfToken(),
+                        "Content-Type": "application/json"
                     }
+                });
 
-                    showMessage(data.message, "green");
-                    window.location.reload();
-                } catch (error) {
-                    showMessage("Network or server error while closing shift.", "red");
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showMessage(data.error || "Failed to close shift.", "red");
                     closeShiftBtn.disabled = false;
                     closeShiftBtn.textContent = "Close Shift";
+                    return;
                 }
-            });
-        }
-    </script>
 
+                showMessage(data.message, "green");
+                window.location.reload();
+            } catch (error) {
+                showMessage("Network or server error while closing shift.", "red");
+                closeShiftBtn.disabled = false;
+                closeShiftBtn.textContent = "Close Shift";
+            }
+        });
+    }
+</script>
 {% endblock %}
