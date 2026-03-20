@@ -69,7 +69,12 @@ def home(request):
 
 @login_required
 def waiter_order_page(request):
-    products = Product.objects.filter(is_active=True).order_by("category", "name")
+    products = (
+        Product.objects
+        .filter(is_active=True, category__is_active=True)
+        .select_related("category")
+        .order_by("category__sort_order", "category__name", "name")
+    )
     open_shift = get_open_shift()
 
     return render(request, "orders/waiter_order_page.html", {
@@ -155,7 +160,11 @@ def submit_order(request):
             continue
 
         try:
-            product = Product.objects.get(id=product_id, is_active=True)
+            product = Product.objects.select_related("category").get(
+                id=product_id,
+                is_active=True,
+                category__is_active=True,
+            )
         except Product.DoesNotExist:
             continue
 

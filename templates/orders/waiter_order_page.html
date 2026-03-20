@@ -345,7 +345,7 @@
 
             {% for group in grouped_products %}
                 <div class="category-block">
-                    <h3 class="category-title">{{ group.grouper }}</h3>
+                    <h3 class="category-title">{{ group.grouper.name }}</h3>
                     <div class="product-grid">
                         {% for product in group.list %}
                             <button
