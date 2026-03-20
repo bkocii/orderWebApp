@@ -19,3 +19,8 @@ def broadcast_order_event(data):
 
 def broadcast_shift_event(data):
     broadcast_to_group("shift_updates", data)
+
+
+def broadcast_category_event(data):
+    broadcast_to_group("shift_updates", data)
+    broadcast_to_group("live_orders_staff", data)

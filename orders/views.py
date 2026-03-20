@@ -6,9 +6,9 @@ from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from products.models import Product
+from products.models import Product, ProductCategory
 from .models import Order, OrderItem, Shift
-from .utils import broadcast_order_event, broadcast_shift_event
+from .utils import broadcast_order_event, broadcast_shift_event, broadcast_category_event
 from django.db.models import Sum, Count, Q
 
 
@@ -59,6 +59,34 @@ def serialize_order(order):
     }
 
 
+def serialize_category(category, include_products=False):
+    data = {
+        "id": category.id,
+        "name": category.name,
+        "slug": category.slug,
+        "is_active": category.is_active,
+        "sort_order": category.sort_order,
+    }
+
+    if include_products:
+        products = (
+            category.products
+            .filter(is_active=True)
+            .order_by("name")
+            .values("id", "name", "price")
+        )
+        data["products"] = [
+            {
+                "id": product["id"],
+                "name": product["name"],
+                "price": str(product["price"]),
+            }
+            for product in products
+        ]
+
+    return data
+
+
 @login_required
 def home(request):
     return render(request, "orders/home.html", {
@@ -102,6 +130,8 @@ def live_orders_page(request):
         .order_by("-finished_at")[:5]
     )
 
+    categories = ProductCategory.objects.order_by("sort_order", "name")
+
     grouped_pending = {}
     for order in pending_orders:
         waiter_name = order.waiter.get_full_name() or order.waiter.username
@@ -110,8 +140,51 @@ def live_orders_page(request):
     return render(request, "orders/live_orders_page.html", {
         "grouped_pending": grouped_pending,
         "recent_finished_orders": recent_finished_orders,
+        "categories": categories,
         "open_shift": get_open_shift(),
         "business_date": get_current_business_date(),
+    })
+
+
+@staff_member_required(login_url="login")
+@require_POST
+def set_category_active(request, category_id):
+    category = get_object_or_404(ProductCategory, id=category_id)
+
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "Invalid JSON body."}, status=400)
+
+    is_active = data.get("is_active")
+
+    if not isinstance(is_active, bool):
+        return JsonResponse(
+            {"success": False, "error": "Field 'is_active' must be true or false."},
+            status=400,
+        )
+
+    if category.is_active == is_active:
+        return JsonResponse({
+            "success": True,
+            "message": f"Category '{category.name}' already {'active' if category.is_active else 'inactive'}.",
+            "category": serialize_category(category, include_products=True),
+        })
+
+    category.is_active = is_active
+    category.save(update_fields=["is_active"])
+
+    category_payload = serialize_category(category, include_products=True)
+
+    broadcast_category_event({
+        "event": "category_updated",
+        "category": category_payload,
+    })
+
+    return JsonResponse({
+        "success": True,
+        "message": f"Category '{category.name}' {'enabled' if category.is_active else 'disabled'}.",
+        "category": category_payload,
     })
 
 

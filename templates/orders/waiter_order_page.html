@@ -341,31 +341,45 @@
         <div class="section">
             <h2>Products</h2>
 
-            {% regroup products by category as grouped_products %}
+            <div id="waiter-categories-container">
+                {% regroup products by category as grouped_products %}
 
-            {% for group in grouped_products %}
-                <div class="category-block">
-                    <h3 class="category-title">{{ group.grouper.name }}</h3>
-                    <div class="product-grid">
-                        {% for product in group.list %}
-                            <button
-                                type="button"
-                                class="product-card"
-                                data-product-id="{{ product.id }}"
-                                data-product-name="{{ product.name }}"
-                                data-product-price="{{ product.price }}"
-                            >
-                                <div class="product-name">{{ product.name }}</div>
-                                <div class="product-price">€{{ product.price }}</div>
-                            </button>
-                        {% endfor %}
+                {% for group in grouped_products %}
+                    <div
+                        class="category-block"
+                        id="waiter-category-{{ group.grouper.id }}"
+                        data-category-id="{{ group.grouper.id }}"
+                        data-category-name="{{ group.grouper.name }}"
+                        data-category-active="{{ group.grouper.is_active|yesno:'true,false' }}"
+                        data-sort-order="{{ group.grouper.sort_order }}"
+                    >
+                        <h3 class="category-title">{{ group.grouper.name }}</h3>
+                        <div class="product-grid">
+                            {% for product in group.list %}
+                                <button
+                                    type="button"
+                                    class="product-card"
+                                    data-product-id="{{ product.id }}"
+                                    data-product-name="{{ product.name }}"
+                                    data-product-price="{{ product.price }}"
+                                >
+                                    <div class="product-name">{{ product.name }}</div>
+                                    <div class="product-price">€{{ product.price }}</div>
+                                </button>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
-            {% empty %}
-                <p>No active products found.</p>
-            {% endfor %}
-        </div>
+                {% empty %}
+                {% endfor %}
+            </div>
 
+            <p
+                id="no-active-products-message"
+                {% if grouped_products %}style="display:none;"{% endif %}
+            >
+                No active products found.
+            </p>
+        </div>
         <div class="section cart-panel">
             <h2>Current Order</h2>
 
@@ -431,6 +445,142 @@
     const shiftWarningBox = document.getElementById("shift-warning-box");
     let hasOpenShift = {{ open_shift|yesno:"true,false" }};
     let currentShiftNumber = {% if open_shift %}{{ open_shift.sequence_number }}{% else %}null{% endif %};
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function buildWaiterProductCard(product) {
+        return `
+            <button
+                type="button"
+                class="product-card"
+                data-product-id="${product.id}"
+                data-product-name="${escapeHtml(product.name)}"
+                data-product-price="${escapeHtml(product.price)}"
+            >
+                <div class="product-name">${escapeHtml(product.name)}</div>
+                <div class="product-price">€${escapeHtml(product.price)}</div>
+            </button>
+        `;
+    }
+
+    function buildWaiterCategoryBlock(category) {
+        const products = Array.isArray(category.products) ? category.products : [];
+
+        const productsHtml = products.map(product => buildWaiterProductCard(product)).join("");
+
+        return `
+            <div
+                class="category-block"
+                id="waiter-category-${category.id}"
+                data-category-id="${category.id}"
+                data-category-name="${escapeHtml(category.name)}"
+                data-category-active="${category.is_active ? "true" : "false"}"
+                data-sort-order="${category.sort_order}"
+            >
+                <h3 class="category-title">${escapeHtml(category.name)}</h3>
+                <div class="product-grid">
+                    ${productsHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    function updateNoProductsMessage() {
+        const message = document.getElementById("no-active-products-message");
+        if (!message) return;
+
+        const visibleCategories = Array.from(document.querySelectorAll(".category-block"))
+            .filter(el => el.style.display !== "none");
+
+        message.style.display = visibleCategories.length ? "none" : "block";
+    }
+
+    function insertCategoryBlockSorted(category) {
+        const container = document.getElementById("waiter-categories-container");
+        if (!container) return null;
+
+        const newHtml = buildWaiterCategoryBlock(category);
+        const blocks = Array.from(container.querySelectorAll(".category-block"));
+
+        const categorySort = Number(category.sort_order || 0);
+        const categoryName = String(category.name || "").toLowerCase();
+
+        for (const block of blocks) {
+            const blockSort = Number(block.dataset.sortOrder || 0);
+            const blockName = String(block.dataset.categoryName || "").toLowerCase();
+
+            if (
+                categorySort < blockSort ||
+                (categorySort === blockSort && categoryName < blockName)
+            ) {
+                block.insertAdjacentHTML("beforebegin", newHtml);
+                return document.getElementById(`waiter-category-${category.id}`);
+            }
+        }
+
+        container.insertAdjacentHTML("beforeend", newHtml);
+        return document.getElementById(`waiter-category-${category.id}`);
+    }
+
+    function setWaiterCategoryVisibility(category) {
+        let block = document.getElementById(`waiter-category-${category.id}`);
+
+        if (!block && category.is_active) {
+            block = insertCategoryBlockSorted(category);
+        }
+
+        if (!block) {
+            updateNoProductsMessage();
+            return;
+        }
+
+        block.dataset.categoryActive = category.is_active ? "true" : "false";
+        block.dataset.categoryName = category.name || "";
+        block.dataset.sortOrder = category.sort_order || 0;
+
+        if (category.is_active) {
+            if (Array.isArray(category.products)) {
+                const grid = block.querySelector(".product-grid");
+                if (grid) {
+                    grid.innerHTML = category.products.map(product => buildWaiterProductCard(product)).join("");
+                }
+            }
+            block.style.display = "";
+        } else {
+            block.style.display = "none";
+        }
+
+        updateNoProductsMessage();
+    }
+
+    function removeCartItemsForCategory(categoryId) {
+        const productButtons = document.querySelectorAll(
+            `#waiter-category-${categoryId} .product-card`
+        );
+
+        const productIds = Array.from(productButtons).map(btn => btn.dataset.productId);
+
+        let removedAny = false;
+
+        productIds.forEach(productId => {
+            if (cart[productId]) {
+                delete cart[productId];
+                removedAny = true;
+            }
+        });
+
+        if (removedAny) {
+            renderCart();
+            showMessage("Some cart items were removed because their category was turned off.", "red");
+        }
+    }
 
     function renderShiftState() {
         if (shiftStatusLine) {
@@ -579,21 +729,21 @@
         }
     }
 
-    document.querySelectorAll(".product-card").forEach(btn => {
-        btn.addEventListener("click", function () {
+    document.addEventListener("click", function (e) {
+        const productBtn = e.target.closest(".product-card");
+        if (productBtn) {
             addToCart(
-                this.dataset.productId,
-                this.dataset.productName,
-                this.dataset.productPrice
+                productBtn.dataset.productId,
+                productBtn.dataset.productName,
+                productBtn.dataset.productPrice
             );
-        });
-    });
+            return;
+        }
 
-    cartList.addEventListener("click", function (e) {
-        const btn = e.target.closest("[data-action]");
-        if (!btn) return;
-
-        changeQuantity(btn.dataset.id, btn.dataset.action);
+        const qtyBtn = e.target.closest("[data-action]");
+        if (qtyBtn && cartList.contains(qtyBtn)) {
+            changeQuantity(qtyBtn.dataset.id, qtyBtn.dataset.action);
+        }
     });
 
     submitOrderBtn.addEventListener("click", submitOrder);
@@ -618,6 +768,17 @@
 
                 renderShiftState();
             }
+
+            if (payload.event === "category_updated") {
+                setWaiterCategoryVisibility(payload.category);
+
+                if (!payload.category.is_active) {
+                    removeCartItemsForCategory(payload.category.id);
+                    showMessage(`Category "${payload.category.name}" was turned off.`, "red");
+                } else {
+                    showMessage(`Category "${payload.category.name}" is available again.`, "green");
+                }
+            }
         };
 
         socket.onclose = function () {
@@ -626,5 +787,6 @@
     })();
     renderShiftState();
     renderCart();
+    updateNoProductsMessage();
 </script>
 {% endblock %}

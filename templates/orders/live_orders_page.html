@@ -179,6 +179,69 @@
         text-align: center;
         color: var(--muted);
     }
+
+        .category-controls-section {
+        margin-bottom: 26px;
+    }
+
+    .category-controls-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+    }
+
+    .category-control-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    }
+
+    .category-control-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .category-control-name {
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .category-control-meta {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+
+    .category-state-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .category-state-badge.active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .category-state-badge.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .category-toggle-btn {
+        width: 100%;
+    }
+
 </style>
 {% endblock %}
 
@@ -222,6 +285,50 @@
     </p>
 
     <div id="page-message" class="message"></div>
+
+        <div class="category-controls-section">
+        <h2 class="section-title">Category Controls</h2>
+        <p class="page-note">
+            Turn product categories on or off. Disabled categories will not be available for new waiter orders.
+        </p>
+
+        <div class="category-controls-grid" id="category-controls-grid">
+            {% for category in categories %}
+                <div
+                    class="category-control-card"
+                    id="category-card-{{ category.id }}"
+                    data-category-id="{{ category.id }}"
+                    data-category-name="{{ category.name }}"
+                    data-category-active="{{ category.is_active|yesno:'true,false' }}"
+                >
+                    <div class="category-control-header">
+                        <div class="category-control-name">{{ category.name }}</div>
+                        <span class="category-state-badge {% if category.is_active %}active{% else %}inactive{% endif %}">
+                            {% if category.is_active %}ACTIVE{% else %}OFF{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="category-control-meta">
+                        Slug: <strong>{{ category.slug }}</strong> |
+                        Sort: <strong>{{ category.sort_order }}</strong>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn {% if category.is_active %}btn-danger{% else %}btn-success{% endif %} category-toggle-btn"
+                        data-category-id="{{ category.id }}"
+                        data-next-state="{% if category.is_active %}false{% else %}true{% endif %}"
+                    >
+                        {% if category.is_active %}Turn Off{% else %}Turn On{% endif %}
+                    </button>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <p>No categories found.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 
     <div id="pending-sections">
         {% if grouped_pending %}
@@ -377,6 +484,70 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+        function updateCategoryCard(category) {
+            const card = document.getElementById(`category-card-${category.id}`);
+            if (!card) return;
+
+            card.dataset.categoryActive = category.is_active ? "true" : "false";
+
+            const badge = card.querySelector(".category-state-badge");
+            const button = card.querySelector(".category-toggle-btn");
+
+            if (badge) {
+                badge.textContent = category.is_active ? "ACTIVE" : "OFF";
+                badge.classList.toggle("active", category.is_active);
+                badge.classList.toggle("inactive", !category.is_active);
+            }
+
+            if (button) {
+                button.textContent = category.is_active ? "Turn Off" : "Turn On";
+                button.dataset.nextState = category.is_active ? "false" : "true";
+                button.classList.toggle("btn-danger", category.is_active);
+                button.classList.toggle("btn-success", !category.is_active);
+                button.disabled = false;
+            }
+        }
+
+    async function processCategoryToggle(button) {
+        const categoryId = button.dataset.categoryId;
+        const nextState = button.dataset.nextState === "true";
+
+        if (!categoryId) return;
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = nextState ? "Turning On..." : "Turning Off...";
+
+        try {
+            const response = await fetch(`/categories/${categoryId}/set-active/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCsrfToken(),
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    is_active: nextState
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                showMessage(data.error || "Failed to update category.", "red");
+                button.disabled = false;
+                button.textContent = originalText;
+                return;
+            }
+
+            updateCategoryCard(data.category);
+            showMessage(data.message || "Category updated.", "green");
+        } catch (error) {
+            showMessage("Network or server error while updating category.", "red");
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 
     function buildPendingCard(order) {
@@ -635,11 +806,18 @@
         }
     }
 
-    document.addEventListener("click", function (e) {
-        const button = e.target.closest("button[data-url]");
-        if (!button) return;
-        processOrder(button);
-    });
+        document.addEventListener("click", function (e) {
+            const orderButton = e.target.closest("button[data-url]");
+            if (orderButton) {
+                processOrder(orderButton);
+                return;
+            }
+
+            const categoryButton = e.target.closest(".category-toggle-btn");
+            if (categoryButton) {
+                processCategoryToggle(categoryButton);
+            }
+        });
 
     let liveSocket = null;
     let reconnectDelay = 1500;
@@ -674,6 +852,14 @@
                 prependPendingOrderCard(payload.order);
                 playNewOrderBeep();
                 showMessage(`New order #${payload.order.id} received.`, "green");
+            }
+
+            if (payload.event === "category_updated") {
+                updateCategoryCard(payload.category);
+                showMessage(
+                    `Category "${payload.category.name}" is now ${payload.category.is_active ? "ON" : "OFF"}.`,
+                    payload.category.is_active ? "green" : "red"
+                );
             }
 
             if (payload.event === "order_updated") {

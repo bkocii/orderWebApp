@@ -6,7 +6,178 @@ A Django-based web app for bar/restaurant order flow.
 Phase 1 in progress:
 - product management
 - waiter login
-- waiter mobile ordering page
+- waiter # Bar Ordering System
+
+A Django-based bar/restaurant ordering system with waiter ordering, live staff order monitoring, shift management, and realtime updates via WebSockets.
+
+---
+
+## Current Phase
+
+Core ordering and shift workflow is implemented:
+
+- product management
+- product categories with active/inactive control
+- waiter login
+- waiter mobile ordering page with cart
+- pending live orders screen
+- finish/cancel order actions
+- realtime live updates with WebSockets
+- shift open/close flow
+- multiple same-day shifts
+- shift summary page
+- per-shift waiter totals and overall totals
+- recent finished orders section
+- live category ON/OFF controls from staff page
+- waiter page category hide/show updates live without refresh
+
+---
+
+## Tech Stack
+
+- Django
+- Django Channels
+- Redis
+- Daphne
+- SQLite for local development
+
+---
+
+## Core Flow
+
+1. Waiter logs in and opens the waiter page.
+2. Waiter selects products and submits an order.
+3. Django creates an `Order` and related `OrderItem` records.
+4. Django attaches the order to the currently open shift.
+5. Django broadcasts events through Redis using Channels.
+6. Staff users connected to the live page receive updates through WebSocket.
+7. Waiter pages also receive shift/category updates through WebSocket.
+8. Live pages and waiter pages update instantly without page refresh.
+
+One-line summary:
+
+`Waiter -> Django -> Redis -> WebSocket -> Live staff/waiter pages`
+
+---
+
+## Apps
+
+- `products` — product catalog and product categories
+- `orders` — ordering flow, shifts, live screen, realtime behavior
+
+---
+
+## Main Models
+
+### ProductCategory
+Stores product groupings used on the waiter page.
+- name
+- slug
+- is_active
+- sort_order
+
+Notes:
+- categories can be turned on/off
+- inactive categories are hidden from waiter ordering
+- category changes can be pushed live to connected waiter pages
+
+### Product
+Stores drinks/items available for ordering.
+- name
+- category (`ForeignKey` to `ProductCategory`)
+- price
+- is_active
+
+### Shift
+Stores one operating shift for a business date.
+- business_date
+- sequence_number
+- status (`open`, `closed`)
+- opened_at / closed_at
+- opened_by / closed_by
+
+Notes:
+- multiple shifts can exist on the same day
+- only one shift can be open at a time
+
+### Order
+Stores one submitted order.
+- waiter
+- shift
+- table_number
+- note
+- status (`pending`, `finished`, `canceled`)
+- timestamps
+- total
+
+### OrderItem
+Stores items inside an order.
+- order
+- product
+- quantity
+- unit_price
+- subtotal
+
+Notes:
+- `unit_price` is copied from product price automatically
+- `subtotal` is calculated automatically
+- `Order.total` is recalculated automatically
+
+---
+
+## Access Rules
+
+### Waiter page
+- authenticated users can access
+
+### Live orders page
+- staff users only (`is_staff=True`)
+
+### WebSocket access
+- authenticated users can connect
+- staff users join the live staff group
+- waiter/staff users can receive shift updates
+- waiter/staff users can receive category state updates
+
+---
+
+## Important Realtime Setup
+
+### Required packages
+- `channels`
+- `channels_redis`
+- `daphne`
+
+### Required services
+- Redis must be running
+
+### Important note
+This project uses WebSockets for realtime updates.
+Because of that, it should run through the ASGI app.
+
+The socket route is:
+
+`/ws/orders/live/`
+
+---
+
+## WebSocket Groups
+
+Current split group design:
+
+- `live_orders_staff` — staff live order events
+- `shift_updates` — shift status updates and category state updates
+
+---
+
+## Development Setup
+
+### 1. Create and activate virtual environment
+
+#### Windows
+```bash
+python -m venv venv
+venv\Scripts\activatemobile ordering page
 - pending live orders screen
 - finish/cancel order actions
 - real-time live updates with WebSockets

@@ -11,4 +11,5 @@ urlpatterns = [
     path("shift-summary/", views.shift_summary_page, name="shift_summary_page"),
     path("open-shift/", views.open_shift, name="open_shift"),
     path("close-shift/", views.close_shift, name="close_shift"),
+    path("categories/<int:category_id>/set-active/", views.set_category_active, name="set_category_active",),
 ]
