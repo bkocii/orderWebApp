@@ -44,7 +44,7 @@
     }
 
     .category-controls-section {
-        margin-bottom: 22px;
+        margin-bottom: 0;
     }
 
     .section-title-row {
@@ -123,45 +123,60 @@
         background: #ecfdf5;
     }
 
+    #pending-sections {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 16px;
+        align-items: start;
+    }
+
     .waiter-section {
-        margin-bottom: 28px;
-        padding: 14px;
+        margin-bottom: 0;
+        padding: 10px;
         background: #f9fafb;
         border: 1px solid #dbe3ea;
-        border-radius: 16px;
+        border-radius: 14px;
+        min-height: 100%;
     }
 
     .finished-section {
-        margin-top: 30px;
+        margin-top: 28px;
         padding-top: 18px;
         border-top: 2px dashed var(--border);
     }
 
     .waiter-header {
-        margin-bottom: 14px;
-        padding: 12px 14px;
+        margin-bottom: 10px;
+        padding: 10px 12px;
         background: white;
         border: 1px solid var(--border);
-        border-left: 6px solid var(--primary);
-        border-radius: 12px;
-        font-size: 17px;
+        border-left: 5px solid var(--primary);
+        border-radius: 10px;
+        font-size: 15px;
         font-weight: 800;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
 
     .orders-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 14px;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .finished-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 10px;
+        align-items: start;
     }
 
     .order-card {
         background: white;
         border: 1px solid var(--border);
-        border-left: 6px solid var(--warning);
-        border-radius: 14px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.04);
-        padding: 14px;
+        border-left: 5px solid var(--warning);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        padding: 10px 12px;
     }
 
     .order-card.finished-card {
@@ -197,36 +212,36 @@
             background: #ffffff;
             border-left-color: var(--warning);
             transform: scale(1);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
     }
 
     .order-header {
         display: flex;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px;
         align-items: flex-start;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .order-title {
-        font-size: 17px;
+        font-size: 15px;
         font-weight: 800;
-        margin-bottom: 2px;
+        margin-bottom: 1px;
     }
 
     .order-meta {
         color: var(--muted);
-        font-size: 13px;
-        line-height: 1.45;
+        font-size: 12px;
+        line-height: 1.35;
     }
 
     .status-badge {
         background: #fef3c7;
         color: #92400e;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
-        padding: 6px 10px;
+        padding: 4px 8px;
         border-radius: 999px;
         white-space: nowrap;
     }
@@ -239,65 +254,89 @@
     .note-box {
         background: #f9fafb;
         border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 8px 10px;
-        margin-bottom: 10px;
-        font-size: 13px;
+        border-radius: 8px;
+        padding: 6px 8px;
+        margin-bottom: 8px;
+        font-size: 12px;
     }
 
     .items-title {
-        font-weight: 700;
+        font-weight: 800;
         margin-bottom: 6px;
-        font-size: 13px;
+        font-size: 12px;
         color: var(--muted);
         text-transform: uppercase;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.03em;
     }
 
     .items-list {
         list-style: none;
         padding: 0;
-        margin: 0 0 12px 0;
+        margin: 0 0 8px 0;
     }
 
     .items-list li {
-        padding: 7px 0;
+        padding: 6px 0;
         border-bottom: 1px solid var(--border);
         display: flex;
         justify-content: space-between;
-        gap: 12px;
-        font-weight: 700;
-        font-size: 16px;
+        gap: 10px;
+        font-size: 14px;
+        color: var(--text);
     }
 
     .items-list li:last-child {
         border-bottom: 0;
     }
 
+    .items-list li span:first-child {
+        font-weight: 600;
+    }
+
+    .items-list li span:last-child {
+        color: #475569;
+        white-space: nowrap;
+    }
+
     .order-footer {
         border-top: 1px solid var(--border);
-        padding-top: 10px;
+        padding-top: 8px;
     }
 
     .order-total {
-        font-size: 17px;
+        font-size: 15px;
         font-weight: 800;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .order-actions {
         display: flex;
-        gap: 8px;
+        gap: 6px;
     }
 
     .finish-btn,
     .cancel-btn {
         flex: 1;
+        min-height: 36px;
+        padding: 8px 10px;
+        font-size: 13px;
     }
 
     .finished-section .section-title {
         font-size: 18px;
         color: var(--muted);
+    }
+
+    .finished-section .order-card {
+        padding: 9px 10px;
+    }
+
+    .finished-section .order-title {
+        font-size: 14px;
+    }
+
+    .finished-section .order-meta {
+        font-size: 12px;
     }
 
     .empty-state {
@@ -307,6 +346,12 @@
         padding: 24px 18px;
         text-align: center;
         color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+        #pending-sections {
+            grid-template-columns: 1fr;
+        }
     }
 
     @media (max-width: 700px) {
@@ -403,11 +448,7 @@
                             <div class="order-card" id="order-card-{{ order.id }}" data-order-id="{{ order.id }}" data-waiter-name="{{ waiter_name }}">
                                 <div class="order-header">
                                     <div>
-                                        <div class="order-title">Order #{{ order.id }}</div>
-                                        <div class="order-meta">
-                                            Table: <strong>{% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}</strong><br>
-                                            Time: <strong>{{ order.created_at|date:"H:i:s" }}</strong>
-                                        </div>
+                                        <div class="order-title">Order #{{ order.id }} · {{ order.created_at|date:"H:i:s" }}</div>
                                     </div>
                                     <span class="status-badge">PENDING</span>
                                 </div>
@@ -457,7 +498,7 @@
                 </div>
             {% endfor %}
         {% else %}
-            <div class="empty-state" id="pending-empty-state">
+            <div class="empty-state" id="pending-empty-state" style="grid-column: 1 / -1;">
                 <h3>No pending orders</h3>
                 <p>When waiters submit new orders, they will appear here.</p>
             </div>
@@ -466,16 +507,14 @@
 
     <div class="finished-section">
         <h2 class="section-title">Recently Finished</h2>
-        <div class="orders-grid" id="recent-finished-grid">
+        <div class="finished-grid" id="recent-finished-grid">
             {% for order in recent_finished_orders %}
                 <div class="order-card finished-card" id="finished-order-card-{{ order.id }}" data-order-id="{{ order.id }}">
                     <div class="order-header">
                         <div>
-                            <div class="order-title">Order #{{ order.id }}</div>
+                            <div class="order-title">Order #{{ order.id }} · {{ order.finished_at|date:"H:i:s" }}</div>
                             <div class="order-meta">
-                                Waiter: <strong>{{ order.waiter.get_full_name|default:order.waiter.username }}</strong><br>
-                                Table: <strong>{% if order.table_number %}{{ order.table_number }}{% else %}-{% endif %}</strong><br>
-                                Finished: <strong>{{ order.finished_at|date:"H:i:s" }}</strong>
+                                Waiter: <strong>{{ order.waiter.get_full_name|default:order.waiter.username }}</strong>
                             </div>
                         </div>
                         <span class="status-badge finished">FINISHED</span>
@@ -578,7 +617,7 @@
 
         const originalText = button.textContent;
         button.disabled = true;
-        button.textContent = nextState ? "..." : "...";
+        button.textContent = "...";
 
         try {
             const response = await fetch(`/categories/${categoryId}/set-active/`, {
@@ -628,11 +667,7 @@
             <div class="order-card new-order" id="order-card-${order.id}" data-order-id="${order.id}" data-waiter-name="${escapeHtml(order.waiter)}">
                 <div class="order-header">
                     <div>
-                        <div class="order-title">Order #${order.id}</div>
-                        <div class="order-meta">
-                            Table: <strong>${order.table_number ? escapeHtml(order.table_number) : "-"}</strong><br>
-                            Time: <strong>${escapeHtml(order.created_at)}</strong>
-                        </div>
+                        <div class="order-title">Order #${order.id} · ${escapeHtml(order.created_at)}</div>
                     </div>
                     <span class="status-badge">PENDING</span>
                 </div>
@@ -671,11 +706,9 @@
             <div class="order-card finished-card" id="finished-order-card-${order.id}" data-order-id="${order.id}">
                 <div class="order-header">
                     <div>
-                        <div class="order-title">Order #${order.id}</div>
+                        <div class="order-title">Order #${order.id} · ${escapeHtml(finishedTime)}</div>
                         <div class="order-meta">
-                            Waiter: <strong>${escapeHtml(order.waiter)}</strong><br>
-                            Table: <strong>${order.table_number ? escapeHtml(order.table_number) : "-"}</strong><br>
-                            Finished: <strong>${escapeHtml(finishedTime)}</strong>
+                            Waiter: <strong>${escapeHtml(order.waiter)}</strong>
                         </div>
                     </div>
                     <span class="status-badge finished">FINISHED</span>
@@ -718,11 +751,12 @@
         const existing = document.getElementById(`order-card-${order.id}`);
         if (existing) existing.remove();
 
-        grid.insertAdjacentHTML("afterbegin", buildPendingCard(order));
+        grid.insertAdjacentHTML("beforeend", buildPendingCard(order));
 
         const card = document.getElementById(`order-card-${order.id}`);
         if (card) {
             setTimeout(() => card.classList.remove("new-order"), 2400);
+            card.scrollIntoView({ block: "nearest", behavior: "smooth" });
         }
     }
 
@@ -744,7 +778,7 @@
         const allSections = pendingSections.querySelectorAll(".waiter-section");
         if (allSections.length === 0 && !document.getElementById("pending-empty-state")) {
             pendingSections.innerHTML = `
-                <div class="empty-state" id="pending-empty-state">
+                <div class="empty-state" id="pending-empty-state" style="grid-column: 1 / -1;">
                     <h3>No pending orders</h3>
                     <p>When waiters submit new orders, they will appear here.</p>
                 </div>
