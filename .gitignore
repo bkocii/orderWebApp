@@ -1,5 +1,6 @@
 #My files
 files/
+staticfiles/
 # Python/Django
 __pycache__/
 *.py[cod]
