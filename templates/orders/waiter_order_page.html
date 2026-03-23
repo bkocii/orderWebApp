@@ -4,356 +4,395 @@
 
 {% block extra_css %}
 <style>
-        :root {
-            --bg: #f3f4f6;
-            --card: #ffffff;
-            --text: #111827;
-            --muted: #6b7280;
-            --border: #e5e7eb;
-            --primary: #111827;
-            --primary-hover: #1f2937;
-            --danger: #dc2626;
-            --danger-hover: #b91c1c;
-            --success: #059669;
-        }
+    :root {
+        --bg: #f3f4f6;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --primary: #111827;
+        --primary-hover: #1f2937;
+        --danger: #dc2626;
+        --danger-hover: #b91c1c;
+        --success: #059669;
+    }
 
-        * {
-            box-sizing: border-box;
-        }
+    * {
+        box-sizing: border-box;
+    }
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-        }
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
 
-        .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 12px 16px;
-        }
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white;
+        border-bottom: 1px solid var(--border);
+        padding: 12px 16px;
+    }
 
-        .topbar h1 {
-            margin: 0 0 4px 0;
-            font-size: 20px;
-        }
+    .topbar h1 {
+        margin: 0 0 4px 0;
+        font-size: 20px;
+    }
 
-        .topbar-meta {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            color: var(--muted);
-            font-size: 14px;
-        }
+    .topbar-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 14px;
+    }
 
+    .container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+    }
+
+    .section h2 {
+        margin: 0 0 14px 0;
+        font-size: 20px;
+    }
+
+    .category-block {
+        margin-bottom: 16px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fafafa;
+        overflow: hidden;
+    }
+
+    .category-header-btn {
+        width: 100%;
+        border: 0;
+        background: white;
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        text-align: left;
+        border-bottom: 1px solid transparent;
+    }
+
+    .category-header-btn:hover {
+        background: #f9fafb;
+    }
+
+    .category-title {
+        font-size: 15px;
+        margin: 0;
+        color: var(--text);
+        text-transform: capitalize;
+        font-weight: 700;
+    }
+
+    .category-toggle-icon {
+        font-size: 14px;
+        color: var(--muted);
+        transition: transform 0.18s ease;
+        flex-shrink: 0;
+    }
+
+    .category-block.is-collapsed .category-toggle-icon {
+        transform: rotate(-90deg);
+    }
+
+    .category-products {
+        padding: 0 16px 16px 16px;
+    }
+
+    .category-block.is-collapsed .category-products {
+        display: none;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+        gap: 12px;
+    }
+
+    .product-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        background: white;
+        cursor: pointer;
+        transition: 0.12s ease;
+        text-align: left;
+        min-height: 88px;
+    }
+
+    .product-card:hover,
+    .product-card:active {
+        border-color: var(--primary);
+        transform: translateY(-1px);
+    }
+
+    .product-name {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .product-price {
+        color: var(--success);
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .cart-empty {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .cart-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .cart-item {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        background: #fafafa;
+    }
+
+    .cart-item-info {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .cart-item-name {
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .cart-item-subtotal {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .qty-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qty-btn,
+    .action-btn,
+    .nav-btn {
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+    }
+
+    .qty-btn {
+        background: var(--primary);
+        color: white;
+        min-width: 40px;
+    }
+
+    .qty-btn.remove {
+        background: var(--danger);
+    }
+
+    .qty-value {
+        min-width: 24px;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .field {
+        margin-bottom: 14px;
+    }
+
+    .field label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .field input,
+    .field textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+        background: white;
+    }
+
+    .field textarea {
+        min-height: 90px;
+        resize: vertical;
+    }
+
+    .cart-footer {
+        border-top: 1px solid var(--border);
+        padding-top: 14px;
+        margin-top: 6px;
+    }
+
+    .cart-total {
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .action-btn {
+        width: 100%;
+        background: var(--primary);
+        color: white;
+        font-weight: bold;
+        padding: 14px;
+    }
+
+    .action-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .nav-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .nav-btn {
+        background: #e5e7eb;
+        color: var(--text);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .shift-warning-box {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        border-radius: 12px;
+        padding: 14px;
+        grid-column: 1 / -1;
+    }
+
+    @media (min-width: 900px) {
         .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 18px;
+            grid-template-columns: 1.6fr 1fr;
+            align-items: start;
         }
 
-        .section {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 18px;
-            box-shadow: var(--shadow);
+        .cart-panel {
+            position: sticky;
+            top: 90px;
         }
-
-        .section h2 {
-            margin: 0 0 14px 0;
-            font-size: 20px;
-        }
-
-        .category-block {
-            margin-bottom: 24px;
-        }
-
-        .category-title {
-            font-size: 15px;
-            margin: 0 0 12px 0;
-            color: var(--muted);
-            text-transform: capitalize;
-            font-weight: 700;
-        }
-
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-            gap: 12px;
-        }
-
-        .product-card {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            background: white;
-            cursor: pointer;
-            transition: 0.12s ease;
-            text-align: left;
-            min-height: 88px;
-        }
-
-        .product-card:hover,
-        .product-card:active {
-            border-color: var(--primary);
-            transform: translateY(-1px);
-        }
-
-        .product-name {
-            font-weight: 700;
-            font-size: 15px;
-            margin-bottom: 8px;
-            line-height: 1.3;
-        }
-
-        .product-price {
-            color: var(--success);
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .cart-empty {
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .cart-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .cart-item {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            background: #fafafa;
-        }
-
-        .cart-footer {
-            border-top: 1px solid var(--border);
-            padding-top: 14px;
-            margin-top: 6px;
-        }
-
-        .cart-total {
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
-
-        .cart-item-info {
-            flex: 1;
-            min-width: 180px;
-        }
-
-        .cart-item-name {
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .cart-item-subtotal {
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .qty-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .qty-btn,
-        .action-btn,
-        .nav-btn {
-            border: 0;
-            border-radius: 8px;
-            padding: 10px 12px;
-            cursor: pointer;
-        }
-
-        .qty-btn {
-            background: var(--primary);
-            color: white;
-            min-width: 40px;
-        }
-
-        .qty-btn.remove {
-            background: var(--danger);
-        }
-
-        .qty-value {
-            min-width: 24px;
-            text-align: center;
-            font-weight: 700;
-        }
-
-        .field {
-            margin-bottom: 14px;
-        }
-
-        .field label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .field input,
-        .field textarea {
-            width: 100%;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 14px;
-            background: white;
-        }
-
-        .field textarea {
-            min-height: 90px;
-            resize: vertical;
-        }
-
-        .cart-footer {
-            border-top: 1px solid var(--border);
-            padding-top: 14px;
-            margin-top: 6px;
-        }
-
-        .cart-total {
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
-
-        .action-btn {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            font-weight: bold;
-            padding: 14px;
-        }
-
-        .action-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .nav-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-
-        .nav-btn {
-            background: #e5e7eb;
-            color: var(--text);
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .shift-warning-box {
-            border: 1px solid #fecaca;
-            background: #fef2f2;
-            border-radius: 12px;
-            padding: 14px;
-            grid-column: 1 / -1;
-        }
-
-        @media (min-width: 900px) {
-            .container {
-                grid-template-columns: 1.6fr 1fr;
-                align-items: start;
-            }
-
-            .cart-panel {
-                position: sticky;
-                top: 90px;
-            }
-        }
-    </style>
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 
-    <div class="topbar">
-        <div class="topbar-row">
-            <h1>Waiter Order Page</h1>
-            <div class="topbar-subtitle">
-                Fast order entry for phones and tablets.
-            </div>
+<div class="topbar">
+    <div class="topbar-row">
+        <h1>Waiter Order Page</h1>
+        <div class="topbar-subtitle">
+            Fast order entry for phones and tablets.
+        </div>
 
-            <div class="topbar-meta">
-                <div class="topbar-status">
-                    <div>Logged in as: <strong>{{ request.user.username }}</strong></div>
-                    <div id="shift-status-line">
-                        Date: <strong>{{ business_date }}</strong> |
-                        {% if open_shift %}
-                            Shift: <strong>#{{ open_shift.sequence_number }}</strong>
-                        {% else %}
-                            <span style="color:#dc2626; font-weight:bold;">No Open Shift</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="nav-row">
-                    <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
-                    {% if request.user.is_staff %}
-                        <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+        <div class="topbar-meta">
+            <div class="topbar-status">
+                <div>Logged in as: <strong>{{ request.user.username }}</strong></div>
+                <div id="shift-status-line">
+                    Date: <strong>{{ business_date }}</strong> |
+                    {% if open_shift %}
+                        Shift: <strong>#{{ open_shift.sequence_number }}</strong>
+                    {% else %}
+                        <span style="color:#dc2626; font-weight:bold;">No Open Shift</span>
                     {% endif %}
                 </div>
             </div>
+
+            <div class="nav-row">
+                <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
+                {% if request.user.is_staff %}
+                    <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+                {% endif %}
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="container">
+<div class="container">
 
-        {% if not open_shift %}
-            <div
-                id="shift-warning-box"
-                class="shift-warning-box"
-                style="{% if open_shift %}display:none;{% endif %}"
-            >
-                <h2 style="color:#b91c1c; margin-top:0;">Ordering Disabled</h2>
-                <p style="margin-bottom:0;">
-                    There is no open shift right now. Please ask staff/admin to open a new shift.
-                </p>
-            </div>
-        {% endif %}
+    {% if not open_shift %}
+        <div
+            id="shift-warning-box"
+            class="shift-warning-box"
+            style="{% if open_shift %}display:none;{% endif %}"
+        >
+            <h2 style="color:#b91c1c; margin-top:0;">Ordering Disabled</h2>
+            <p style="margin-bottom:0;">
+                There is no open shift right now. Please ask staff/admin to open a new shift.
+            </p>
+        </div>
+    {% endif %}
 
-        <div class="section">
-            <h2>Products</h2>
+    <div class="section">
+        <h2>Products</h2>
 
-            <div id="waiter-categories-container">
-                {% regroup products by category as grouped_products %}
+        <div id="waiter-categories-container">
+            {% regroup products by category as grouped_products %}
 
-                {% for group in grouped_products %}
-                    <div
-                        class="category-block"
-                        id="waiter-category-{{ group.grouper.id }}"
-                        data-category-id="{{ group.grouper.id }}"
-                        data-category-name="{{ group.grouper.name }}"
-                        data-category-active="{{ group.grouper.is_active|yesno:'true,false' }}"
-                        data-sort-order="{{ group.grouper.sort_order }}"
+            {% for group in grouped_products %}
+                <div
+                    class="category-block"
+                    id="waiter-category-{{ group.grouper.id }}"
+                    data-category-id="{{ group.grouper.id }}"
+                    data-category-name="{{ group.grouper.name }}"
+                    data-category-active="{{ group.grouper.is_active|yesno:'true,false' }}"
+                    data-sort-order="{{ group.grouper.sort_order }}"
+                >
+                    <button
+                        type="button"
+                        class="category-header-btn"
+                        data-category-toggle="{{ group.grouper.id }}"
+                        aria-expanded="true"
                     >
                         <h3 class="category-title">{{ group.grouper.name }}</h3>
+                        <span class="category-toggle-icon">▼</span>
+                    </button>
+
+                    <div class="category-products">
                         <div class="product-grid">
                             {% for product in group.list %}
                                 <button
@@ -369,49 +408,50 @@
                             {% endfor %}
                         </div>
                     </div>
-                {% empty %}
-                {% endfor %}
-            </div>
-
-            <p
-                id="no-active-products-message"
-                {% if grouped_products %}style="display:none;"{% endif %}
-            >
-                No active products found.
-            </p>
+                </div>
+            {% empty %}
+            {% endfor %}
         </div>
-        <div class="section cart-panel">
-            <h2>Current Order</h2>
 
-            <div class="field">
-                <label for="table_number">Table Number</label>
-                <input type="text" id="table_number" placeholder="e.g. 5">
-            </div>
+        <p
+            id="no-active-products-message"
+            {% if grouped_products %}style="display:none;"{% endif %}
+        >
+            No active products found.
+        </p>
+    </div>
 
-            <div class="field">
-                <label for="note">Note</label>
-                <textarea id="note" placeholder="Optional note..."></textarea>
-            </div>
+    <div class="section cart-panel">
+        <h2>Current Order</h2>
 
-            <div id="cart-empty" class="cart-empty">No items added yet.</div>
-            <div id="cart-list" class="cart-list"></div>
+        <div class="field">
+            <label for="table_number">Table Number</label>
+            <input type="text" id="table_number" placeholder="e.g. 5">
+        </div>
 
-            <div id="submit-message" class="message" style="font-size:14px;"></div>
+        <div class="field">
+            <label for="note">Note</label>
+            <textarea id="note" placeholder="Optional note..."></textarea>
+        </div>
 
-            <div class="cart-footer">
-                <div class="cart-total">Total: €<span id="cart-total">0.00</span></div>
-                <button id="submit-order-btn" class="btn btn-primary" disabled>
-                    Submit Order
-                </button>
-            </div>
+        <div id="cart-empty" class="cart-empty">No items added yet.</div>
+        <div id="cart-list" class="cart-list"></div>
+
+        <div id="submit-message" class="message" style="font-size:14px;"></div>
+
+        <div class="cart-footer">
+            <div class="cart-total">Total: €<span id="cart-total">0.00</span></div>
+            <button id="submit-order-btn" class="btn btn-primary" disabled>
+                Submit Order
+            </button>
         </div>
     </div>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
-
-    <script>
+<script>
     const cart = {};
     const cartList = document.getElementById("cart-list");
     const cartEmpty = document.getElementById("cart-empty");
@@ -472,7 +512,6 @@
 
     function buildWaiterCategoryBlock(category) {
         const products = Array.isArray(category.products) ? category.products : [];
-
         const productsHtml = products.map(product => buildWaiterProductCard(product)).join("");
 
         return `
@@ -484,12 +523,43 @@
                 data-category-active="${category.is_active ? "true" : "false"}"
                 data-sort-order="${category.sort_order}"
             >
-                <h3 class="category-title">${escapeHtml(category.name)}</h3>
-                <div class="product-grid">
-                    ${productsHtml}
+                <button
+                    type="button"
+                    class="category-header-btn"
+                    data-category-toggle="${category.id}"
+                    aria-expanded="true"
+                >
+                    <h3 class="category-title">${escapeHtml(category.name)}</h3>
+                    <span class="category-toggle-icon">▼</span>
+                </button>
+
+                <div class="category-products">
+                    <div class="product-grid">
+                        ${productsHtml}
+                    </div>
                 </div>
             </div>
         `;
+    }
+
+    function setCategoryCollapsed(categoryId, collapsed) {
+        const block = document.getElementById(`waiter-category-${categoryId}`);
+        if (!block) return;
+
+        block.classList.toggle("is-collapsed", collapsed);
+
+        const toggleBtn = block.querySelector(".category-header-btn");
+        if (toggleBtn) {
+            toggleBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        }
+    }
+
+    function toggleCategoryCollapsed(categoryId) {
+        const block = document.getElementById(`waiter-category-${categoryId}`);
+        if (!block) return;
+
+        const isCollapsed = block.classList.contains("is-collapsed");
+        setCategoryCollapsed(categoryId, !isCollapsed);
     }
 
     function updateNoProductsMessage() {
@@ -730,6 +800,12 @@
     }
 
     document.addEventListener("click", function (e) {
+        const categoryToggleBtn = e.target.closest("[data-category-toggle]");
+        if (categoryToggleBtn) {
+            toggleCategoryCollapsed(categoryToggleBtn.dataset.categoryToggle);
+            return;
+        }
+
         const productBtn = e.target.closest(".product-card");
         if (productBtn) {
             addToCart(
@@ -785,6 +861,17 @@
             console.warn("Waiter shift socket closed");
         };
     })();
+
+    document.querySelectorAll(".category-block").forEach((block, index) => {
+        if (index > 0) {
+            block.classList.add("is-collapsed");
+            const toggleBtn = block.querySelector(".category-header-btn");
+            if (toggleBtn) {
+                toggleBtn.setAttribute("aria-expanded", "false");
+            }
+        }
+    });
+
     renderShiftState();
     renderCart();
     updateNoProductsMessage();
