@@ -16,7 +16,10 @@ build/
 
 # Django-specific
 *.sqlite3
-migrations/
+
+# Django migrations: keep migration files, ignore cache only
+**/migrations/__pycache__/
+**/migrations/*.pyc
 *.migrate
 *.backup
 
