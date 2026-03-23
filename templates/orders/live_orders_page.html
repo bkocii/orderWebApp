@@ -4,32 +4,155 @@
 
 {% block extra_css %}
 <style>
-    .page-note {
-        color: var(--muted);
-        margin-bottom: 28px;
+    .live-topbar-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 18px;
+        flex-wrap: wrap;
     }
 
-    .waiter-section,
+    .live-status-line {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 6px;
+        line-height: 1.4;
+    }
+
+    .status-text-danger {
+        color: #dc2626;
+        font-weight: 700;
+    }
+
+    .sound-toggle-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        padding: 10px 12px;
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+    }
+
+    .live-toolbar {
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+    }
+
+    .category-controls-section {
+        margin-bottom: 22px;
+    }
+
+    .section-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .category-controls-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+    }
+
+    .category-control-card {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+    }
+
+    .category-control-name {
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 1.3;
+    }
+
+    .category-state-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .category-state-badge.active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .category-state-badge.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .category-toggle-btn {
+        border: 1px solid var(--border);
+        background: #fff;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        min-width: 78px;
+    }
+
+    .category-toggle-btn.is-on {
+        color: #991b1b;
+        border-color: #fecaca;
+        background: #fff5f5;
+    }
+
+    .category-toggle-btn.is-off {
+        color: #065f46;
+        border-color: #a7f3d0;
+        background: #ecfdf5;
+    }
+
+    .waiter-section {
+        margin-bottom: 28px;
+        padding: 14px;
+        background: #f9fafb;
+        border: 1px solid #dbe3ea;
+        border-radius: 16px;
+    }
+
     .finished-section {
-        margin-bottom: 26px;
+        margin-top: 30px;
+        padding-top: 18px;
+        border-top: 2px dashed var(--border);
     }
 
     .waiter-header {
-        margin-bottom: 12px;
+        margin-bottom: 14px;
         padding: 12px 14px;
         background: white;
         border: 1px solid var(--border);
-        border-left: 5px solid var(--primary);
+        border-left: 6px solid var(--primary);
         border-radius: 12px;
-        font-size: 18px;
-        font-weight: 700;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+        font-size: 17px;
+        font-weight: 800;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
 
     .orders-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 14px;
     }
 
     .order-card {
@@ -37,22 +160,18 @@
         border: 1px solid var(--border);
         border-left: 6px solid var(--warning);
         border-radius: 14px;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.05);
-        padding: 16px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+        padding: 14px;
     }
 
     .order-card.finished-card {
-        background: #f9fafb;
-        opacity: 0.92;
+        background: #fcfcfc;
+        opacity: 0.88;
         border-left-color: var(--success);
     }
 
     .order-card.new-order {
         animation: newOrderFlash 2.4s ease;
-    }
-
-    .finished-section .order-card {
-        transform: scale(0.985);
     }
 
     @keyframes newOrderFlash {
@@ -78,28 +197,28 @@
             background: #ffffff;
             border-left-color: var(--warning);
             transform: scale(1);
-            box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.04);
         }
     }
 
     .order-header {
         display: flex;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
         align-items: flex-start;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
     .order-title {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 4px;
+        font-size: 17px;
+        font-weight: 800;
+        margin-bottom: 2px;
     }
 
     .order-meta {
         color: var(--muted);
-        font-size: 14px;
-        line-height: 1.5;
+        font-size: 13px;
+        line-height: 1.45;
     }
 
     .status-badge {
@@ -121,29 +240,34 @@
         background: #f9fafb;
         border: 1px solid var(--border);
         border-radius: 10px;
-        padding: 10px 12px;
-        margin-bottom: 12px;
-        font-size: 14px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        font-size: 13px;
     }
 
     .items-title {
         font-weight: 700;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
     }
 
     .items-list {
         list-style: none;
         padding: 0;
-        margin: 0 0 14px 0;
+        margin: 0 0 12px 0;
     }
 
     .items-list li {
-        padding: 8px 0;
+        padding: 7px 0;
         border-bottom: 1px solid var(--border);
         display: flex;
         justify-content: space-between;
         gap: 12px;
-        font-size: 14px;
+        font-weight: 700;
+        font-size: 16px;
     }
 
     .items-list li:last-child {
@@ -152,23 +276,28 @@
 
     .order-footer {
         border-top: 1px solid var(--border);
-        padding-top: 12px;
+        padding-top: 10px;
     }
 
     .order-total {
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 800;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
     .order-actions {
         display: flex;
-        gap: 10px;
+        gap: 8px;
     }
 
     .finish-btn,
     .cancel-btn {
         flex: 1;
+    }
+
+    .finished-section .section-title {
+        font-size: 18px;
+        color: var(--muted);
     }
 
     .empty-state {
@@ -180,88 +309,31 @@
         color: var(--muted);
     }
 
-        .category-controls-section {
-        margin-bottom: 26px;
-    }
+    @media (max-width: 700px) {
+        .category-control-card {
+            grid-template-columns: 1fr auto;
+        }
 
-    .category-controls-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
+        .category-toggle-btn {
+            grid-column: 1 / -1;
+            width: 100%;
+        }
     }
-
-    .category-control-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 14px;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.05);
-    }
-
-    .category-control-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 10px;
-    }
-
-    .category-control-name {
-        font-weight: 700;
-        font-size: 16px;
-    }
-
-    .category-control-meta {
-        color: var(--muted);
-        font-size: 13px;
-        margin-bottom: 12px;
-    }
-
-    .category-state-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        padding: 5px 10px;
-        font-size: 12px;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .category-state-badge.active {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .category-state-badge.inactive {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .category-toggle-btn {
-        width: 100%;
-    }
-
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="topbar">
     <div class="topbar-row">
-        <h1>Live Orders</h1>
-        <div class="topbar-subtitle">
-            Real-time pending orders grouped by waiter, with recent finished history.
-        </div>
-
-        <div class="topbar-meta">
-            <div id="live-shift-status-line" class="topbar-status">
-                <div>Grouped by waiter with recent finished history</div>
-                <div>
+        <div class="live-topbar-main">
+            <div>
+                <h1>Live Orders</h1>
+                <div id="live-shift-status-line" class="live-status-line">
                     Date: <strong>{{ business_date }}</strong> |
                     {% if open_shift %}
-                        Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
+                        Shift: <strong>#{{ open_shift.sequence_number }}</strong>
                     {% else %}
-                        <span style="color:#dc2626; font-weight:bold;">No Open Shift</span>
+                        <span class="status-text-danger">No Open Shift</span>
                     {% endif %}
                 </div>
             </div>
@@ -270,9 +342,9 @@
                 <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
                 <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
                 <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Shift Summary</a>
-                <label style="display:flex; align-items:center; gap:8px; font-size:14px;">
+                <label class="sound-toggle-wrap">
                     <input type="checkbox" id="sound-toggle" checked>
-                    Sound alert
+                    <span>Sound</span>
                 </label>
             </div>
         </div>
@@ -280,53 +352,44 @@
 </div>
 
 <div class="container">
-    <p class="page-note">
-        Pending orders stay grouped by waiter. Finished orders move to a recent history area and keep the latest 5.
-    </p>
-
     <div id="page-message" class="message"></div>
 
+    <div class="live-toolbar">
         <div class="category-controls-section">
-        <h2 class="section-title">Category Controls</h2>
-        <p class="page-note">
-            Turn product categories on or off. Disabled categories will not be available for new waiter orders.
-        </p>
+            <div class="section-title-row">
+                <h2 class="section-title">Category Controls</h2>
+            </div>
 
-        <div class="category-controls-grid" id="category-controls-grid">
-            {% for category in categories %}
-                <div
-                    class="category-control-card"
-                    id="category-card-{{ category.id }}"
-                    data-category-id="{{ category.id }}"
-                    data-category-name="{{ category.name }}"
-                    data-category-active="{{ category.is_active|yesno:'true,false' }}"
-                >
-                    <div class="category-control-header">
-                        <div class="category-control-name">{{ category.name }}</div>
-                        <span class="category-state-badge {% if category.is_active %}active{% else %}inactive{% endif %}">
-                            {% if category.is_active %}ACTIVE{% else %}OFF{% endif %}
-                        </span>
-                    </div>
-
-                    <div class="category-control-meta">
-                        Slug: <strong>{{ category.slug }}</strong> |
-                        Sort: <strong>{{ category.sort_order }}</strong>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="btn {% if category.is_active %}btn-danger{% else %}btn-success{% endif %} category-toggle-btn"
+            <div class="category-controls-grid" id="category-controls-grid">
+                {% for category in categories %}
+                    <div
+                        class="category-control-card"
+                        id="category-card-{{ category.id }}"
                         data-category-id="{{ category.id }}"
-                        data-next-state="{% if category.is_active %}false{% else %}true{% endif %}"
+                        data-category-name="{{ category.name }}"
+                        data-category-active="{{ category.is_active|yesno:'true,false' }}"
                     >
-                        {% if category.is_active %}Turn Off{% else %}Turn On{% endif %}
-                    </button>
-                </div>
-            {% empty %}
-                <div class="empty-state">
-                    <p>No categories found.</p>
-                </div>
-            {% endfor %}
+                        <div class="category-control-name">{{ category.name }}</div>
+
+                        <span class="category-state-badge {% if category.is_active %}active{% else %}inactive{% endif %}">
+                            {% if category.is_active %}ON{% else %}OFF{% endif %}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="category-toggle-btn {% if category.is_active %}is-on{% else %}is-off{% endif %}"
+                            data-category-id="{{ category.id }}"
+                            data-next-state="{% if category.is_active %}false{% else %}true{% endif %}"
+                        >
+                            {% if category.is_active %}Disable{% else %}Enable{% endif %}
+                        </button>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <p>No categories found.</p>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
@@ -452,15 +515,12 @@
         if (!liveShiftStatusLine) return;
 
         liveShiftStatusLine.innerHTML = `
-            <div>Grouped by waiter with recent finished history</div>
-            <div>
-                Date: <strong>{{ business_date }}</strong> |
-                ${
-                    liveHasOpenShift && liveCurrentShiftNumber
-                        ? `Active shift: <strong>#${liveCurrentShiftNumber}</strong>`
-                        : `<span style="color:#dc2626; font-weight:bold;">No Open Shift</span>`
-                }
-            </div>
+            Date: <strong>{{ business_date }}</strong> |
+            ${
+                liveHasOpenShift && liveCurrentShiftNumber
+                    ? `Shift: <strong>#${liveCurrentShiftNumber}</strong>`
+                    : `<span class="status-text-danger">No Open Shift</span>`
+            }
         `;
     }
 
@@ -486,29 +546,29 @@
             .replace(/'/g, "&#039;");
     }
 
-        function updateCategoryCard(category) {
-            const card = document.getElementById(`category-card-${category.id}`);
-            if (!card) return;
+    function updateCategoryCard(category) {
+        const card = document.getElementById(`category-card-${category.id}`);
+        if (!card) return;
 
-            card.dataset.categoryActive = category.is_active ? "true" : "false";
+        card.dataset.categoryActive = category.is_active ? "true" : "false";
 
-            const badge = card.querySelector(".category-state-badge");
-            const button = card.querySelector(".category-toggle-btn");
+        const badge = card.querySelector(".category-state-badge");
+        const button = card.querySelector(".category-toggle-btn");
 
-            if (badge) {
-                badge.textContent = category.is_active ? "ACTIVE" : "OFF";
-                badge.classList.toggle("active", category.is_active);
-                badge.classList.toggle("inactive", !category.is_active);
-            }
-
-            if (button) {
-                button.textContent = category.is_active ? "Turn Off" : "Turn On";
-                button.dataset.nextState = category.is_active ? "false" : "true";
-                button.classList.toggle("btn-danger", category.is_active);
-                button.classList.toggle("btn-success", !category.is_active);
-                button.disabled = false;
-            }
+        if (badge) {
+            badge.textContent = category.is_active ? "ON" : "OFF";
+            badge.classList.toggle("active", category.is_active);
+            badge.classList.toggle("inactive", !category.is_active);
         }
+
+        if (button) {
+            button.textContent = category.is_active ? "Disable" : "Enable";
+            button.dataset.nextState = category.is_active ? "false" : "true";
+            button.classList.toggle("is-on", category.is_active);
+            button.classList.toggle("is-off", !category.is_active);
+            button.disabled = false;
+        }
+    }
 
     async function processCategoryToggle(button) {
         const categoryId = button.dataset.categoryId;
@@ -518,7 +578,7 @@
 
         const originalText = button.textContent;
         button.disabled = true;
-        button.textContent = nextState ? "Turning On..." : "Turning Off...";
+        button.textContent = nextState ? "..." : "...";
 
         try {
             const response = await fetch(`/categories/${categoryId}/set-active/`, {
@@ -806,18 +866,18 @@
         }
     }
 
-        document.addEventListener("click", function (e) {
-            const orderButton = e.target.closest("button[data-url]");
-            if (orderButton) {
-                processOrder(orderButton);
-                return;
-            }
+    document.addEventListener("click", function (e) {
+        const orderButton = e.target.closest("button[data-url]");
+        if (orderButton) {
+            processOrder(orderButton);
+            return;
+        }
 
-            const categoryButton = e.target.closest(".category-toggle-btn");
-            if (categoryButton) {
-                processCategoryToggle(categoryButton);
-            }
-        });
+        const categoryButton = e.target.closest(".category-toggle-btn");
+        if (categoryButton) {
+            processCategoryToggle(categoryButton);
+        }
+    });
 
     let liveSocket = null;
     let reconnectDelay = 1500;
