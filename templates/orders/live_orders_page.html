@@ -12,6 +12,13 @@
         flex-wrap: wrap;
     }
 
+    .live-topbar-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+    }
+
     .live-status-line {
         color: var(--muted);
         font-size: 14px;
@@ -363,6 +370,11 @@
             grid-column: 1 / -1;
             width: 100%;
         }
+
+        .live-topbar-actions {
+            align-items: stretch;
+            width: 100%;
+        }
     }
 </style>
 {% endblock %}
@@ -373,6 +385,9 @@
         <div class="live-topbar-main">
             <div>
                 <h1>Live Orders</h1>
+                <div class="topbar-subtitle">
+                    Real-time order handling and quick category controls.
+                </div>
                 <div id="live-shift-status-line" class="live-status-line">
                     Date: <strong>{{ business_date }}</strong> |
                     {% if open_shift %}
@@ -383,14 +398,17 @@
                 </div>
             </div>
 
-            <div class="nav-row">
-                <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
-                <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
-                <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Shift Summary</a>
+            <div class="live-topbar-actions">
                 <label class="sound-toggle-wrap">
                     <input type="checkbox" id="sound-toggle" checked>
                     <span>Sound</span>
                 </label>
+
+                <div class="nav-row">
+                    <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
+                    <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Shift Summary</a>
+                </div>
             </div>
         </div>
     </div>

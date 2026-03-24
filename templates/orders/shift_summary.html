@@ -4,22 +4,6 @@
 
 {% block extra_css %}
 <style>
-    .summary-topbar-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 14px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-    }
-
-    .summary-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-
     .summary-shift-header {
         display: flex;
         justify-content: space-between;
@@ -56,17 +40,21 @@
             Business date: <strong>{{ business_date }}</strong>
         </div>
 
-        <div class="summary-topbar-meta">
-            <div class="info-strip">
+        <div class="topbar-meta">
+            <div class="topbar-status">
                 {% if open_shift %}
-                    Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
-                    <span class="badge badge-success">OPEN</span>
+                    <div>
+                        Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
+                        <span class="badge badge-success">OPEN</span>
+                    </div>
                 {% else %}
-                    <span class="badge badge-danger">NO OPEN SHIFT</span>
+                    <div>
+                        <span class="badge badge-danger">NO OPEN SHIFT</span>
+                    </div>
                 {% endif %}
             </div>
 
-            <div class="summary-actions">
+            <div class="nav-row">
                 <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
                 <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
 

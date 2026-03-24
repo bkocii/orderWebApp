@@ -9,9 +9,12 @@
         <div class="topbar-subtitle">
             Central access point for waiter ordering, live order handling, and shift management.
         </div>
+
         <div class="topbar-meta">
-            <div class="info-strip">
-                Logged in as: <strong>{{ request.user.username }}</strong>
+            <div class="topbar-status">
+                <div>
+                    Logged in as: <strong>{{ request.user.username }}</strong>
+                </div>
             </div>
 
             <div class="nav-row">
