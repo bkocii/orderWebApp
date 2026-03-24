@@ -317,6 +317,41 @@
             top: 90px;
         }
     }
+
+    @media (max-width: 600px) {
+        .category-products {
+            padding: 0 10px 10px 10px;
+        }
+
+        .product-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .product-card {
+            padding: 9px 10px;
+            min-height: 68px;
+            border-radius: 10px;
+        }
+
+        .product-name {
+            font-size: 13px;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        .product-price {
+            font-size: 13px;
+        }
+
+        .category-header-btn {
+            padding: 12px 12px;
+        }
+
+        .category-title {
+            font-size: 14px;
+        }
+    }
 </style>
 {% endblock %}
 
