@@ -1,15 +1,15 @@
 import json
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from products.models import Product, ProductCategory
 from .models import Order, OrderItem, Shift
 from .utils import broadcast_order_event, broadcast_shift_event, broadcast_category_event
 from django.db.models import Sum, Count, Q
+from django.conf import settings
+from datetime import timedelta
 
 
 def get_current_business_date():
@@ -35,6 +35,62 @@ def get_next_shift_sequence(business_date=None):
         .first()
     )
     return 1 if not last_shift else last_shift.sequence_number + 1
+
+
+def has_recent_shift_summary_verification(request):
+    verified_at = request.session.get("shift_summary_verified_at")
+    if not verified_at:
+        return False
+
+    try:
+        verified_at = timezone.datetime.fromisoformat(verified_at)
+    except (TypeError, ValueError):
+        return False
+
+    if timezone.is_naive(verified_at):
+        verified_at = timezone.make_aware(verified_at, timezone.get_current_timezone())
+
+    return timezone.now() <= verified_at + timedelta(seconds=settings.SHIFT_SUMMARY_PIN_TTL_SECONDS)
+
+
+def mark_shift_summary_verified(request):
+    request.session["shift_summary_verified_at"] = timezone.now().isoformat()
+    request.session.modified = True
+
+
+def user_in_group(user, group_name):
+    return user.is_authenticated and user.groups.filter(name=group_name).exists()
+
+
+def can_access_live(user):
+    return user.is_authenticated and (
+        user.is_superuser
+        or user_in_group(user, "Bar")
+        or user_in_group(user, "Managers")
+    )
+
+
+def can_access_shift_summary(user):
+    return user.is_authenticated and (
+        user.is_superuser
+        or user_in_group(user, "Managers")
+    )
+
+
+def can_open_close_shift(user):
+    return user.is_authenticated and (
+        user.is_superuser
+        or user_in_group(user, "Bar")
+        or user_in_group(user, "Managers")
+    )
+
+
+def can_submit_orders(user):
+    return user.is_authenticated and (
+        user.is_superuser
+        or user_in_group(user, "Waiters")
+        or user_in_group(user, "Managers")
+    )
 
 
 def serialize_order(order):
@@ -93,10 +149,13 @@ def home(request):
     return render(request, "orders/home.html", {
         "open_shift": get_open_shift(),
         "business_date": get_current_business_date(),
+        "can_access_live": can_access_live(request.user),
+        "can_access_shift_summary": can_access_shift_summary(request.user),
+        "can_submit_orders": can_submit_orders(request.user),
     })
 
 
-@login_required
+@user_passes_test(can_submit_orders, login_url="login")
 def waiter_order_page(request):
     products = (
         Product.objects
@@ -110,10 +169,12 @@ def waiter_order_page(request):
         "products": products,
         "open_shift": open_shift,
         "business_date": get_current_business_date(),
+        "can_access_live": can_access_live(request.user),
+        "can_access_shift_summary": can_access_shift_summary(request.user),
     })
 
 
-@staff_member_required(login_url="login")
+@user_passes_test(can_access_live, login_url="login")
 def live_orders_page(request):
     pending_orders = (
         Order.objects
@@ -146,10 +207,13 @@ def live_orders_page(request):
         "categories": categories,
         "open_shift": get_open_shift(),
         "business_date": get_current_business_date(),
+        "can_access_shift_summary": can_access_shift_summary(request.user),
+        "can_open_close_shift": can_open_close_shift(request.user),
+        "can_submit_orders": can_submit_orders(request.user)
     })
 
 
-@staff_member_required(login_url="login")
+@user_passes_test(can_access_live, login_url="login")
 @require_POST
 def set_category_active(request, category_id):
     category = get_object_or_404(ProductCategory, id=category_id)
@@ -191,7 +255,7 @@ def set_category_active(request, category_id):
     })
 
 
-@login_required
+@user_passes_test(can_submit_orders, login_url="login")
 @require_POST
 def submit_order(request):
     try:
@@ -271,7 +335,7 @@ def submit_order(request):
     })
 
 
-@staff_member_required(login_url="login")
+@user_passes_test(can_access_live, login_url="login")
 @require_POST
 def finish_order(request, order_id):
     order = get_object_or_404(
@@ -300,7 +364,7 @@ def finish_order(request, order_id):
     })
 
 
-@staff_member_required(login_url="login")
+@user_passes_test(can_access_live, login_url="login")
 @require_POST
 def cancel_order(request, order_id):
     order = get_object_or_404(
@@ -329,7 +393,7 @@ def cancel_order(request, order_id):
     })
 
 
-@staff_member_required(login_url="login")
+@user_passes_test(can_open_close_shift, login_url="login")
 @require_POST
 def open_shift(request):
     business_date = get_current_business_date()
@@ -355,6 +419,8 @@ def open_shift(request):
             "business_date": str(shift.business_date),
             "sequence_number": shift.sequence_number,
             "status": shift.status,
+            "opened_at": shift.opened_at.strftime("%Y-%m-%d %H:%M:%S") if shift.opened_at else "",
+            "closed_at": "",
             "opened_by": shift.opened_by.get_full_name() or shift.opened_by.username if shift.opened_by else "",
             "closed_by": "",
         }
@@ -369,8 +435,11 @@ def open_shift(request):
     })
 
 
-@staff_member_required(login_url="login")
+@user_passes_test(can_access_shift_summary, login_url="login")
 def shift_summary_page(request):
+    if not has_recent_shift_summary_verification(request):
+        return redirect("shift_summary_unlock")
+
     business_date = get_current_business_date()
     open_shift = get_open_shift(business_date)
 
@@ -433,10 +502,12 @@ def shift_summary_page(request):
         "open_shift": open_shift,
         "shift_summaries": shift_summaries,
         "overall": overall,
+        "can_open_close_shift": can_open_close_shift(request.user),
+        "can_submit_orders": can_submit_orders(request.user),
     })
 
 
-@staff_member_required(login_url="login")
+@user_passes_test(can_open_close_shift, login_url="login")
 @require_POST
 def close_shift(request):
     shift = get_open_shift()
@@ -456,6 +527,8 @@ def close_shift(request):
             "business_date": str(shift.business_date),
             "sequence_number": shift.sequence_number,
             "status": shift.status,
+            "opened_at": shift.opened_at.strftime("%Y-%m-%d %H:%M:%S") if shift.opened_at else "",
+            "closed_at": shift.closed_at.strftime("%Y-%m-%d %H:%M:%S") if shift.closed_at else "",
             "opened_by": shift.opened_by.get_full_name() or shift.opened_by.username if shift.opened_by else "",
             "closed_by": shift.closed_by.get_full_name() or shift.closed_by.username if shift.closed_by else "",
         }
@@ -467,5 +540,27 @@ def close_shift(request):
         "shift_id": shift.id,
         "sequence_number": shift.sequence_number,
         "business_date": str(shift.business_date),
+    })
+
+
+@user_passes_test(can_access_shift_summary, login_url="login")
+def shift_summary_unlock(request):
+    if has_recent_shift_summary_verification(request):
+        return redirect("shift_summary_page")
+
+    error = None
+
+    if request.method == "POST":
+        entered_pin = (request.POST.get("pin") or "").strip()
+
+        if entered_pin == settings.SHIFT_SUMMARY_PIN:
+            mark_shift_summary_verified(request)
+            return redirect("shift_summary_page")
+
+        error = "Invalid passcode."
+
+    return render(request, "orders/shift_summary_unlock.html", {
+        "error": error,
+        "can_access_live": can_access_live(request.user),
     })
 

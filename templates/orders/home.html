@@ -18,11 +18,16 @@
             </div>
 
             <div class="nav-row">
-                <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+                {% if can_submit_orders %}
+                    <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+                {% endif %}
 
-                {% if request.user.is_staff %}
+                {% if can_access_live %}
                     <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
-                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Shift Summary</a>
+                {% endif %}
+
+                {% if can_access_shift_summary %}
+                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_unlock' %}">Shift Summary</a>
                 {% endif %}
 
                 <form method="post" action="{% url 'logout' %}" style="margin:0;">
@@ -56,6 +61,7 @@
         {% endif %}
     </div>
 
+    {% if can_submit_orders %}
     <div class="grid grid-2">
         <div class="card feature-card">
             <div class="stack-sm">
@@ -64,13 +70,13 @@
                     Use the waiter page to create orders quickly from a phone or tablet.
                 </p>
             </div>
-
             <div class="action-row">
                 <a class="btn-link btn-primary" href="{% url 'waiter_order_page' %}">Open Waiter Page</a>
             </div>
         </div>
+        {% endif %}
 
-        {% if request.user.is_staff %}
+        {% if can_access_live %}
             <div class="card feature-card">
                 <div class="stack-sm">
                     <h2 class="section-title">Live Operations</h2>
@@ -81,7 +87,9 @@
 
                 <div class="action-row">
                     <a class="btn-link btn-primary" href="{% url 'live_orders_page' %}">Open Live Orders</a>
-                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Open Shift Summary</a>
+                    {% if can_access_shift_summary %}
+                        <a class="btn-link btn-secondary" href="{% url 'shift_summary_unlock' %}">Open Shift Summary</a>
+                    {% endif %}
                 </div>
             </div>
         {% endif %}

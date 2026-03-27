@@ -41,7 +41,7 @@
         </div>
 
         <div class="topbar-meta">
-            <div class="topbar-status">
+            <div class="topbar-status" id ="shift-summary-topbar-status">
                 {% if open_shift %}
                     <div>
                         Active shift: <strong>#{{ open_shift.sequence_number }}</strong>
@@ -56,17 +56,24 @@
 
             <div class="nav-row">
                 <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
+                {% if can_submit_orders %}
+                    <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+                {% endif %}
                 <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
 
-                {% if open_shift %}
-                    <button id="close-shift-btn" class="btn btn-danger">
-                        Close Shift {{ open_shift.sequence_number }}
-                    </button>
-                {% else %}
-                    <button id="open-shift-btn" class="btn btn-success">
-                        Open New Shift
-                    </button>
-                {% endif %}
+                <div id="shift-summary-action-slot">
+                    {% if can_open_close_shift %}
+                        {% if open_shift %}
+                            <button id="close-shift-btn" class="btn btn-danger">
+                                Close Shift {{ open_shift.sequence_number }}
+                            </button>
+                        {% else %}
+                            <button id="open-shift-btn" class="btn btn-success">
+                                Open New Shift
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -77,7 +84,7 @@
 
     <div class="card">
         <h2 class="section-title">Current Shift Status</h2>
-
+        <div id="shift-summary-current-status-card">
         {% if open_shift %}
             <p style="margin:0 0 10px 0;">
                 Open shift: <strong>Shift {{ open_shift.sequence_number }}</strong>
@@ -92,6 +99,7 @@
         {% else %}
             <p class="muted" style="margin:0;">No open shift right now.</p>
         {% endif %}
+        </div>
     </div>
 
     {% if shift_summaries %}
@@ -255,8 +263,11 @@
 {% block extra_js %}
 <script>
     const pageMessage = document.getElementById("page-message");
-    const openShiftBtn = document.getElementById("open-shift-btn");
-    const closeShiftBtn = document.getElementById("close-shift-btn");
+    const topbarStatus = document.getElementById("shift-summary-topbar-status");
+    const currentStatusCard = document.getElementById("shift-summary-current-status-card");
+
+    let summaryHasOpenShift = {{ open_shift|yesno:"true,false" }};
+    let summaryCurrentShiftNumber = {% if open_shift %}{{ open_shift.sequence_number }}{% else %}null{% endif %};
 
     function getCsrfToken() {
         const cookieValue = document.cookie
@@ -266,14 +277,100 @@
     }
 
     function showMessage(text, color = "green") {
+        if (!pageMessage) return;
         pageMessage.textContent = text;
         pageMessage.style.color = color;
     }
 
-    if (openShiftBtn) {
-        openShiftBtn.addEventListener("click", async function () {
-            openShiftBtn.disabled = true;
-            openShiftBtn.textContent = "Opening...";
+    function renderSummaryTopbarStatus() {
+        if (!topbarStatus) return;
+
+        if (summaryHasOpenShift && summaryCurrentShiftNumber) {
+            topbarStatus.innerHTML = `
+                <div>
+                    Active shift: <strong>#${summaryCurrentShiftNumber}</strong>
+                    <span class="badge badge-success">OPEN</span>
+                </div>
+            `;
+        } else {
+            topbarStatus.innerHTML = `
+                <div>
+                    <span class="badge badge-danger">NO OPEN SHIFT</span>
+                </div>
+            `;
+        }
+    }
+
+    function renderSummaryCurrentStatusCard(shiftPayload = null) {
+        if (!currentStatusCard) return;
+
+        if (summaryHasOpenShift && summaryCurrentShiftNumber) {
+            const openedBy = shiftPayload?.opened_by || "-";
+            const openedAt = shiftPayload?.opened_at || "-";
+
+            currentStatusCard.innerHTML = `
+                <p style="margin:0 0 10px 0;">
+                    Open shift: <strong>Shift ${summaryCurrentShiftNumber}</strong>
+                    <span class="badge badge-success">OPEN</span>
+                </p>
+                <p class="muted" style="margin:0 0 8px 0;">
+                    Opened at: <strong>${openedAt}</strong>
+                </p>
+                <p class="muted" style="margin:0;">
+                    Opened by: <strong>${openedBy || "-"}</strong>
+                </p>
+            `;
+        } else {
+            const closedBy = shiftPayload?.closed_by || "-";
+            const closedAt = shiftPayload?.closed_at || "";
+
+            currentStatusCard.innerHTML = `
+                <p class="muted" style="margin:0 0 8px 0;">No open shift right now.</p>
+                ${
+                    closedAt
+                        ? `<p class="muted" style="margin:0 0 8px 0;">Last closed at: <strong>${closedAt}</strong></p>`
+                        : ""
+                }
+                ${
+                    closedBy && closedBy !== "-"
+                        ? `<p class="muted" style="margin:0;">Closed by: <strong>${closedBy}</strong></p>`
+                        : ""
+                }
+            `;
+        }
+    }
+
+    function renderSummaryShiftActionButton() {
+        const slot = document.getElementById("shift-summary-action-slot");
+        if (!slot) return;
+
+        const canOpenCloseShift = {{ can_open_close_shift|yesno:"true,false" }};
+
+        if (!canOpenCloseShift) {
+            slot.innerHTML = "";
+            return;
+        }
+
+        if (summaryHasOpenShift && summaryCurrentShiftNumber) {
+            slot.innerHTML = `
+                <button id="close-shift-btn" class="btn btn-danger">
+                    Close Shift ${summaryCurrentShiftNumber}
+                </button>
+            `;
+        } else {
+            slot.innerHTML = `
+                <button id="open-shift-btn" class="btn btn-success">
+                    Open New Shift
+                </button>
+            `;
+        }
+    }
+
+    document.addEventListener("click", async function (e) {
+        const openBtn = e.target.closest("#open-shift-btn");
+        if (openBtn) {
+            openBtn.disabled = true;
+            openBtn.textContent = "Opening...";
 
             try {
                 const response = await fetch("{% url 'open_shift' %}", {
@@ -288,29 +385,26 @@
 
                 if (!response.ok || !data.success) {
                     showMessage(data.error || "Failed to open shift.", "red");
-                    openShiftBtn.disabled = false;
-                    openShiftBtn.textContent = "Open New Shift";
+                    renderSummaryShiftActionButton();
                     return;
                 }
 
                 showMessage(data.message, "green");
-                window.location.reload();
             } catch (error) {
                 showMessage("Network or server error while opening shift.", "red");
-                openShiftBtn.disabled = false;
-                openShiftBtn.textContent = "Open New Shift";
+                renderSummaryShiftActionButton();
             }
-        });
-    }
+            return;
+        }
 
-    if (closeShiftBtn) {
-        closeShiftBtn.addEventListener("click", async function () {
+        const closeBtn = e.target.closest("#close-shift-btn");
+        if (closeBtn) {
             if (!confirm("Close the current shift? New orders will be blocked until a new shift is opened.")) {
                 return;
             }
 
-            closeShiftBtn.disabled = true;
-            closeShiftBtn.textContent = "Closing...";
+            closeBtn.disabled = true;
+            closeBtn.textContent = "Closing...";
 
             try {
                 const response = await fetch("{% url 'close_shift' %}", {
@@ -325,19 +419,50 @@
 
                 if (!response.ok || !data.success) {
                     showMessage(data.error || "Failed to close shift.", "red");
-                    closeShiftBtn.disabled = false;
-                    closeShiftBtn.textContent = "Close Shift";
+                    renderSummaryShiftActionButton();
                     return;
                 }
 
-                showMessage(data.message, "green");
-                window.location.reload();
+                showMessage(data.message, "red");
             } catch (error) {
                 showMessage("Network or server error while closing shift.", "red");
-                closeShiftBtn.disabled = false;
-                closeShiftBtn.textContent = "Close Shift";
+                renderSummaryShiftActionButton();
             }
-        });
-    }
+            return;
+        }
+    });
+
+    (function connectShiftSummarySocket() {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/orders/live/`);
+
+        socket.onmessage = function (event) {
+            const payload = JSON.parse(event.data);
+
+            if (payload.event === "shift_updated") {
+                if (payload.shift.status === "open") {
+                    summaryHasOpenShift = true;
+                    summaryCurrentShiftNumber = payload.shift.sequence_number;
+                    showMessage(`Shift #${payload.shift.sequence_number} opened.`, "green");
+                } else if (payload.shift.status === "closed") {
+                    summaryHasOpenShift = false;
+                    summaryCurrentShiftNumber = null;
+                    showMessage(`Shift #${payload.shift.sequence_number} closed by ${payload.shift.closed_by || "staff"}.`, "red");
+                }
+
+                renderSummaryTopbarStatus();
+                renderSummaryCurrentStatusCard(payload.shift);
+                renderSummaryShiftActionButton();
+            }
+        };
+
+        socket.onclose = function () {
+            console.warn("Shift summary socket closed");
+        };
+    })();
+
+    renderSummaryTopbarStatus();
+    renderSummaryCurrentStatusCard();
+    renderSummaryShiftActionButton();
 </script>
 {% endblock %}

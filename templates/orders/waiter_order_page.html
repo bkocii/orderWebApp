@@ -342,8 +342,11 @@
 
             <div class="nav-row">
                 <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
-                {% if request.user.is_staff %}
+                {% if can_access_live %}
                     <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+                {% endif %}
+
+                {% if can_access_shift_summary %}
                     <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Shift Summary</a>
                 {% endif %}
             </div>

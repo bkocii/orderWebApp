@@ -144,6 +144,8 @@ CHANNEL_LAYERS = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+SHIFT_SUMMARY_PIN = get_env("SHIFT_SUMMARY_PIN", "2468")
+SHIFT_SUMMARY_PIN_TTL_SECONDS = int(get_env("SHIFT_SUMMARY_PIN_TTL_SECONDS", "60"))
 
 # Production-only security
 if not DEBUG:

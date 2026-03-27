@@ -395,6 +395,7 @@
                     {% else %}
                         <span class="status-text-danger">No Open Shift</span>
                     {% endif %}
+
                 </div>
             </div>
 
@@ -406,8 +407,25 @@
 
                 <div class="nav-row">
                     <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
-                    <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
-                    <a class="btn-link btn-secondary" href="{% url 'shift_summary_page' %}">Shift Summary</a>
+                    {% if can_submit_orders %}
+                        <a class="btn-link btn-secondary" href="{% url 'waiter_order_page' %}">Waiter Page</a>
+                    {% endif %}
+                    {% if can_access_shift_summary %}
+                        <a class="btn-link btn-secondary" href="{% url 'shift_summary_unlock' %}">Shift Summary</a>
+                    {% endif %}
+                    <div id="live-shift-action-slot">
+                        {% if can_open_close_shift %}
+                            {% if open_shift %}
+                                <button id="close-shift-btn" class="btn btn-danger">
+                                    Close Shift {{ open_shift.sequence_number }}
+                                </button>
+                            {% else %}
+                                <button id="open-shift-btn" class="btn btn-success">
+                                    Open New Shift
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -564,22 +582,10 @@
 {% block extra_js %}
 <script>
     const liveShiftStatusLine = document.getElementById("live-shift-status-line");
-    let liveHasOpenShift = {{ open_shift|yesno:"true,false" }};
-    let liveCurrentShiftNumber = {% if open_shift %}{{ open_shift.sequence_number }}{% else %}null{% endif %};
     const pageMessage = document.getElementById("page-message");
 
-    function renderLiveShiftState() {
-        if (!liveShiftStatusLine) return;
-
-        liveShiftStatusLine.innerHTML = `
-            Date: <strong>{{ business_date }}</strong> |
-            ${
-                liveHasOpenShift && liveCurrentShiftNumber
-                    ? `Shift: <strong>#${liveCurrentShiftNumber}</strong>`
-                    : `<span class="status-text-danger">No Open Shift</span>`
-            }
-        `;
-    }
+    let liveHasOpenShift = {{ open_shift|yesno:"true,false" }};
+    let liveCurrentShiftNumber = {% if open_shift %}{{ open_shift.sequence_number }}{% else %}null{% endif %};
 
     function getCsrfToken() {
         const cookieValue = document.cookie
@@ -601,6 +607,47 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function renderLiveShiftState() {
+        if (!liveShiftStatusLine) return;
+
+        liveShiftStatusLine.innerHTML = `
+            <div>
+                Date: <strong>{{ business_date }}</strong> |
+                ${
+                    liveHasOpenShift && liveCurrentShiftNumber
+                        ? `Shift: <strong>#${liveCurrentShiftNumber}</strong>`
+                        : `<span class="status-text-danger">No Open Shift</span>`
+                }
+            </div>
+        `;
+    }
+
+    function renderShiftActionButton() {
+        const slot = document.getElementById("live-shift-action-slot");
+        if (!slot) return;
+
+        const canOpenCloseShift = {{ can_open_close_shift|yesno:"true,false" }};
+
+        if (!canOpenCloseShift) {
+            slot.innerHTML = "";
+            return;
+        }
+
+        if (liveHasOpenShift && liveCurrentShiftNumber) {
+            slot.innerHTML = `
+                <button id="close-shift-btn" class="btn btn-danger">
+                    Close Shift ${liveCurrentShiftNumber}
+                </button>
+            `;
+        } else {
+            slot.innerHTML = `
+                <button id="open-shift-btn" class="btn btn-success">
+                    Open New Shift
+                </button>
+            `;
+        }
     }
 
     function updateCategoryCard(category) {
@@ -918,7 +965,71 @@
         }
     }
 
-    document.addEventListener("click", function (e) {
+    document.addEventListener("click", async function (e) {
+        const openBtn = e.target.closest("#open-shift-btn");
+        if (openBtn) {
+            openBtn.disabled = true;
+            openBtn.textContent = "Opening...";
+
+            try {
+                const response = await fetch("{% url 'open_shift' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCsrfToken(),
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showMessage(data.error || "Failed to open shift.", "red");
+                    renderShiftActionButton();
+                    return;
+                }
+
+                showMessage(data.message, "green");
+            } catch (error) {
+                showMessage("Network or server error while opening shift.", "red");
+                renderShiftActionButton();
+            }
+            return;
+        }
+
+        const closeBtn = e.target.closest("#close-shift-btn");
+        if (closeBtn) {
+            if (!confirm("Close the current shift? New orders will be blocked until a new shift is opened.")) {
+                return;
+            }
+
+            closeBtn.disabled = true;
+            closeBtn.textContent = "Closing...";
+
+            try {
+                const response = await fetch("{% url 'close_shift' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCsrfToken(),
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showMessage(data.error || "Failed to close shift.", "red");
+                    renderShiftActionButton();
+                    return;
+                }
+
+                showMessage(data.message, "red");
+            } catch (error) {
+                showMessage("Network or server error while closing shift.", "red");
+                renderShiftActionButton();
+            }
+            return;
+        }
+
         const orderButton = e.target.closest("button[data-url]");
         if (orderButton) {
             processOrder(orderButton);
@@ -958,6 +1069,7 @@
                 }
 
                 renderLiveShiftState();
+                renderShiftActionButton();
             }
 
             if (payload.event === "order_created") {
@@ -1004,5 +1116,6 @@
 
     connectLiveOrdersSocket();
     renderLiveShiftState();
+    renderShiftActionButton();
 </script>
 {% endblock %}

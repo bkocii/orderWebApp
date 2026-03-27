@@ -1,5 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
 
 
 class LiveOrdersConsumer(AsyncWebsocketConsumer):
@@ -12,7 +13,7 @@ class LiveOrdersConsumer(AsyncWebsocketConsumer):
 
         self.group_names = ["shift_updates"]
 
-        if user.is_staff:
+        if await self.has_live_access(user):
             self.group_names.append("live_orders_staff")
 
         for group_name in self.group_names:
@@ -27,3 +28,10 @@ class LiveOrdersConsumer(AsyncWebsocketConsumer):
 
     async def order_event(self, event):
         await self.send(text_data=json.dumps(event["data"]))
+
+    @database_sync_to_async
+    def has_live_access(self, user):
+        return (
+            user.is_superuser
+            or user.groups.filter(name__in=["Bar", "Managers"]).exists()
+        )

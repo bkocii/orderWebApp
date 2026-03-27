@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Unlock Shift Summary | Bar Ordering System{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <div class="topbar-row">
+        <h1>Unlock Shift Summary</h1>
+        <div class="topbar-subtitle">
+            Enter the summary passcode to continue.
+        </div>
+
+        <div class="topbar-meta">
+            <div class="topbar-status">
+                <div>Protected manager area</div>
+            </div>
+
+            <div class="nav-row">
+                <a class="btn-link btn-secondary" href="{% url 'home' %}">Home</a>
+                <a class="btn-link btn-secondary" href="{% url 'live_orders_page' %}">Live Orders</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="max-width: 520px;">
+    <div class="card">
+        <h2 class="section-title">Passcode Required</h2>
+
+        {% if error %}
+            <div class="message" style="color: var(--danger); margin-bottom: 12px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="field" style="margin-bottom: 14px;">
+                <label for="pin" style="display:block; margin-bottom:6px; font-weight:700;">Passcode</label>
+                <input
+                    type="password"
+                    id="pin"
+                    name="pin"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    style="width:100%; border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:14px;"
+                    required
+                >
+            </div>
+
+            <div class="nav-row">
+                <button type="submit" class="btn btn-primary">Unlock</button>
+                <a class="btn-link btn-secondary" href="{% url 'home' %}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
