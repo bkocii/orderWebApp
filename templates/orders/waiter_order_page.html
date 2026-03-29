@@ -373,6 +373,45 @@
         <h2>Products</h2>
 
         <div id="waiter-categories-container">
+
+            {% if top_products %}
+                <div
+                    class="category-block"
+                    id="waiter-category-top-products"
+                    data-category-id="top-products"
+                    data-category-name="Top Products"
+                    data-category-active="true"
+                    data-sort-order="-1"
+                >
+                    <button
+                        type="button"
+                        class="category-header-btn"
+                        data-category-toggle="top-products"
+                        aria-expanded="true"
+                    >
+                        <h3 class="category-title">Top Products</h3>
+                        <span class="category-toggle-icon">▼</span>
+                    </button>
+
+                    <div class="category-products">
+                        <div class="product-grid">
+                            {% for product in top_products %}
+                                <button
+                                    type="button"
+                                    class="product-card"
+                                    data-product-id="{{ product.id }}"
+                                    data-product-name="{{ product.name }}"
+                                    data-product-price="{{ product.price }}"
+                                >
+                                    <div class="product-name">{{ product.name }}</div>
+                                    <div class="product-price">€{{ product.price }}</div>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
             {% regroup products by category as grouped_products %}
 
             {% for group in grouped_products %}

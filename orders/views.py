@@ -7,9 +7,43 @@ from django.utils import timezone
 from products.models import Product, ProductCategory
 from .models import Order, OrderItem, Shift
 from .utils import broadcast_order_event, broadcast_shift_event, broadcast_category_event
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, F
 from django.conf import settings
 from datetime import timedelta
+
+
+def get_top_products(limit=12):
+    top_items = (
+        OrderItem.objects
+        .filter(
+            order__status=Order.STATUS_FINISHED,
+            product__is_active=True,
+            product__category__is_active=True,
+        )
+        .values(
+            "product_id",
+            "product__name",
+            "product__price",
+            "product__category_id",
+            "product__category__name",
+            "product__category__sort_order",
+        )
+        .annotate(total_sold=Sum("quantity"))
+        .order_by("-total_sold", "product__name")[:limit]
+    )
+
+    return [
+        {
+            "id": row["product_id"],
+            "name": row["product__name"],
+            "price": row["product__price"],
+            "category_id": row["product__category_id"],
+            "category_name": row["product__category__name"],
+            "category_sort_order": row["product__category__sort_order"],
+            "total_sold": row["total_sold"] or 0,
+        }
+        for row in top_items
+    ]
 
 
 def get_current_business_date():
@@ -164,9 +198,11 @@ def waiter_order_page(request):
         .order_by("category__sort_order", "category__name", "name")
     )
     open_shift = get_open_shift()
+    top_products = get_top_products(limit=12)
 
     return render(request, "orders/waiter_order_page.html", {
         "products": products,
+        "top_products": top_products,
         "open_shift": open_shift,
         "business_date": get_current_business_date(),
         "can_access_live": can_access_live(request.user),
