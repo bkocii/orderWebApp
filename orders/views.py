@@ -134,9 +134,9 @@ def serialize_order(order):
         "table_number": order.table_number or "",
         "note": order.note or "",
         "status": order.status,
-        "created_at": order.created_at.strftime("%H:%M:%S") if order.created_at else "",
-        "finished_at": order.finished_at.strftime("%H:%M:%S") if order.finished_at else "",
-        "canceled_at": order.canceled_at.strftime("%H:%M:%S") if order.canceled_at else "",
+        "created_at": timezone.localtime(order.created_at).strftime("%H:%M:%S") if order.created_at else "",
+        "finished_at": timezone.localtime(order.finished_at).strftime("%H:%M:%S") if order.finished_at else "",
+        "canceled_at": timezone.localtime(order.canceled_at).strftime("%H:%M:%S") if order.canceled_at else "",
         "total": str(order.total),
         "items": [
             {
@@ -455,7 +455,7 @@ def open_shift(request):
             "business_date": str(shift.business_date),
             "sequence_number": shift.sequence_number,
             "status": shift.status,
-            "opened_at": shift.opened_at.strftime("%Y-%m-%d %H:%M:%S") if shift.opened_at else "",
+            "opened_at": timezone.localtime(shift.opened_at).strftime("%Y-%m-%d %H:%M:%S") if shift.opened_at else "",
             "closed_at": "",
             "opened_by": shift.opened_by.get_full_name() or shift.opened_by.username if shift.opened_by else "",
             "closed_by": "",
@@ -563,8 +563,8 @@ def close_shift(request):
             "business_date": str(shift.business_date),
             "sequence_number": shift.sequence_number,
             "status": shift.status,
-            "opened_at": shift.opened_at.strftime("%Y-%m-%d %H:%M:%S") if shift.opened_at else "",
-            "closed_at": shift.closed_at.strftime("%Y-%m-%d %H:%M:%S") if shift.closed_at else "",
+            "opened_at": timezone.localtime(shift.opened_at).strftime("%Y-%m-%d %H:%M:%S") if shift.opened_at else "",
+            "closed_at": timezone.localtime(shift.closed_at).strftime("%Y-%m-%d %H:%M:%S") if shift.closed_at else "",
             "opened_by": shift.opened_by.get_full_name() or shift.opened_by.username if shift.opened_by else "",
             "closed_by": shift.closed_by.get_full_name() or shift.closed_by.username if shift.closed_by else "",
         }
